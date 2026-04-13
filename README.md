@@ -264,7 +264,6 @@ Lynkly.sln
 │   │
 │   ├── Services/
 │   │   └── Lynkly.Resolver.API
-│   │       ├── Controllers/
 │   │       ├── Endpoints/
 │   │       ├── Middleware/
 │   │       ├── Configurations/

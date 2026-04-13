@@ -1,0 +1,13 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.1.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>d055905a-04f0-4aad-b993-20b4a3d7eff5</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Services\Lynkly.Resolver.API\Lynkly.Resolver.API.csproj" />
+    <ProjectReference Include="..\..\src\Workers\Lynkly.Resolver.AnalyticsWorker\Lynkly.Resolver.AnalyticsWorker.csproj" />
+  </ItemGroup>
+
+</Project>

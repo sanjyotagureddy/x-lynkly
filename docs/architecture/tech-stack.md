@@ -76,6 +76,13 @@ The exact package versions should be pinned in the solution once projects exist,
 - Testcontainers
 - NSubstitute
 
+## Package Management
+
+- Use Central Package Management for all .NET projects.
+- Store package versions in Directory.Packages.props at the repository root.
+- Use Directory.Build.props for shared build properties.
+- Keep CentralPackageVersionOverrideEnabled set to false to avoid per-project version drift.
+
 ## Implementation Rules
 
 - Keep runtime concerns at infrastructure boundaries.

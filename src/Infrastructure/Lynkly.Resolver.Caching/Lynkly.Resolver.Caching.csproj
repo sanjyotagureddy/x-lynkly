@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
+    <ProjectReference Include="..\..\Core\Lynkly.Resolver.Domain\Lynkly.Resolver.Domain.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Caching\Lynkly.Shared.Kernel.Caching.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Core\Lynkly.Shared.Kernel.Core.csproj" />
+  </ItemGroup>
+
+</Project>

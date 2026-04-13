@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <UserSecretsId>dotnet-Lynkly.Resolver.AnalyticsWorker-a6bc3d37-19c6-401a-95d7-9812fd6e26d4</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\aspire\lynkly.ServiceDefaults\lynkly.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Lynkly.Resolver.Messaging\Lynkly.Resolver.Messaging.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Lynkly.Resolver.Persistence\Lynkly.Resolver.Persistence.csproj" />
+  </ItemGroup>
+</Project>
