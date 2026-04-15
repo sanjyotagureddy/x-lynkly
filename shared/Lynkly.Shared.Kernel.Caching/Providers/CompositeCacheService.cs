@@ -33,7 +33,21 @@ internal sealed class CompositeCacheService : ICacheService
         for (var i = 0; i < _providers.Count; i++)
         {
             var provider = _providers[i];
-            var value = await provider.GetAsync<TValue>(key.Value, cancellationToken);
+            TValue? value;
+
+            try
+            {
+                value = await provider.GetAsync<TValue>(key.Value, cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                continue;
+            }
+
             if (value is null)
             {
                 continue;
@@ -43,8 +57,20 @@ internal sealed class CompositeCacheService : ICacheService
             {
                 var tasks = _providers
                     .Take(i)
-                    .Select(previousProvider =>
-                        previousProvider.SetAsync(key.Value, value, _registrationOptions.DefaultEntryOptions, cancellationToken));
+                    .Select(async previousProvider =>
+                    {
+                        try
+                        {
+                            await previousProvider.SetAsync(key.Value, value, _registrationOptions.DefaultEntryOptions, cancellationToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            throw;
+                        }
+                        catch
+                        {
+                        }
+                    });
 
                 await Task.WhenAll(tasks);
             }

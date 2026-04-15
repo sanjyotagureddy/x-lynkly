@@ -2,6 +2,7 @@ using Lynkly.Shared.Kernel.Caching.Abstractions;
 using Lynkly.Shared.Kernel.Caching.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Lynkly.Resolver.UnitTests.SharedKernel.Caching;
 
@@ -95,12 +96,86 @@ public sealed class CacheServiceTests
         Assert.Contains("IDistributedCache", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GetAsync_Should_Fallback_To_NextProvider_When_PreferredProvider_Throws()
+    {
+        var distributedCache = new FakeDistributedCache
+        {
+            ThrowOnGet = true
+        };
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IDistributedCache>(distributedCache);
+        services.AddKernelCaching(options => options.ReadPreference = CacheReadPreference.PreferDistributed);
+
+        await using var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICacheService>();
+        var key = new CacheKey<string>("links:jkl");
+
+        await cache.SetAsync(key, "https://fallback.example");
+        var value = await cache.GetAsync(key);
+
+        Assert.Equal("https://fallback.example", value);
+    }
+
+    [Fact]
+    public async Task GetAsync_Should_Return_Value_When_Backfill_Fails()
+    {
+        var distributedCache = new FakeDistributedCache
+        {
+            ThrowOnSet = true
+        };
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IDistributedCache>(distributedCache);
+        services.AddKernelCaching(options => options.ReadPreference = CacheReadPreference.PreferDistributed);
+
+        await using var provider = services.BuildServiceProvider();
+        var key = new CacheKey<string>("links:mno");
+        provider.GetRequiredService<IMemoryCache>().Set(key.Value, "https://memory-hit.example");
+        var cache = provider.GetRequiredService<ICacheService>();
+
+        var value = await cache.GetAsync(key);
+
+        Assert.Equal("https://memory-hit.example", value);
+    }
+
+    [Fact]
+    public async Task GetAsync_Should_Treat_Invalid_Distributed_Payload_As_Miss_And_Remove_Entry()
+    {
+        var distributedCache = new FakeDistributedCache();
+        distributedCache.SetRaw("links:pqr", "not-json"u8.ToArray());
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IDistributedCache>(distributedCache);
+        services.AddKernelCaching(options =>
+        {
+            options.EnableInMemoryProvider = false;
+            options.EnableDistributedProvider = true;
+        });
+
+        await using var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICacheService>();
+
+        var value = await cache.GetAsync(new CacheKey<string>("links:pqr"));
+
+        Assert.Null(value);
+        Assert.Null(await distributedCache.GetAsync("links:pqr"));
+    }
+
     private sealed class FakeDistributedCache : IDistributedCache
     {
         private readonly Dictionary<string, byte[]> _store = new(StringComparer.Ordinal);
+        public bool ThrowOnGet { get; set; }
+        public bool ThrowOnSet { get; set; }
 
         public byte[]? Get(string key)
         {
+            if (ThrowOnGet)
+            {
+                throw new InvalidOperationException("Simulated distributed cache get failure.");
+            }
+
             return _store.TryGetValue(key, out var value) ? value : null;
         }
 
@@ -111,6 +186,11 @@ public sealed class CacheServiceTests
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
         {
+            if (ThrowOnSet)
+            {
+                throw new InvalidOperationException("Simulated distributed cache set failure.");
+            }
+
             _store[key] = value;
         }
 
@@ -138,6 +218,11 @@ public sealed class CacheServiceTests
         {
             Remove(key);
             return Task.CompletedTask;
+        }
+
+        public void SetRaw(string key, byte[] value)
+        {
+            _store[key] = value;
         }
     }
 }

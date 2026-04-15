@@ -1,6 +1,7 @@
 using Lynkly.Shared.Kernel.Caching.Abstractions;
 using Lynkly.Shared.Kernel.Caching.Serialization;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace Lynkly.Shared.Kernel.Caching.Providers;
 
@@ -34,7 +35,20 @@ internal sealed class DistributedCacheProvider : ICacheProvider
             return default;
         }
 
-        return _serializer.Deserialize<TValue>(bytes);
+        try
+        {
+            return _serializer.Deserialize<TValue>(bytes);
+        }
+        catch (JsonException)
+        {
+            await TryRemoveCorruptedEntryAsync(key, cancellationToken);
+            return default;
+        }
+        catch (NotSupportedException)
+        {
+            await TryRemoveCorruptedEntryAsync(key, cancellationToken);
+            return default;
+        }
     }
 
     public async Task SetAsync<TValue>(
@@ -60,6 +74,26 @@ internal sealed class DistributedCacheProvider : ICacheProvider
         }
 
         return _distributedCache.RemoveAsync(key, cancellationToken);
+    }
+
+    private async Task TryRemoveCorruptedEntryAsync(string key, CancellationToken cancellationToken)
+    {
+        if (_distributedCache is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _distributedCache.RemoveAsync(key, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
     }
 
     private static DistributedCacheEntryOptions ToDistributedOptions(CacheEntryOptions options)
