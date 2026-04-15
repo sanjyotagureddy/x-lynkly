@@ -83,6 +83,9 @@ public sealed class SecurityValidationMathRandomConversionTests
         Assert.True(ConversionHelper.TryConvert<Mode>(1, out enumResult));
         Assert.Equal(Mode.Active, enumResult);
 
+        Assert.True(ConversionHelper.TryConvert<Mode?>("Active", out var nullableEnumResult));
+        Assert.Equal(Mode.Active, nullableEnumResult);
+
         Assert.False(ConversionHelper.TryConvert<int>(null, out _));
         Assert.False(ConversionHelper.TryConvert<int>("bad", out _));
         Assert.False(ConversionHelper.TryConvert<int>(new object(), out _));

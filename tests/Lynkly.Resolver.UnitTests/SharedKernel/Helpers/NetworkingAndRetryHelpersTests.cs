@@ -161,6 +161,30 @@ public sealed class NetworkingAndRetryHelpersTests
         Assert.Equal(2, attempts);
     }
 
+    [Fact]
+    public async Task RetryHelper_ExponentialBackoff_Should_NotOverflowLargeDelays()
+    {
+        var attempts = 0;
+        using var cts = new CancellationTokenSource();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => RetryHelper.ExecuteAsync(
+            _ =>
+            {
+                attempts++;
+                cts.Cancel();
+                return Task.FromException(new InvalidOperationException("force retry"));
+            },
+            new RetryPolicyOptions
+            {
+                RetryCount = 1,
+                InitialDelay = TimeSpan.MaxValue,
+                DelayStrategy = RetryDelayStrategy.ExponentialBackoff
+            },
+            cts.Token));
+
+        Assert.Equal(1, attempts);
+    }
+
     private sealed class TestMessageHandler(HttpStatusCode statusCode, string content) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

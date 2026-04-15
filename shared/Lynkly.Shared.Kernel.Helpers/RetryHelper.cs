@@ -47,6 +47,9 @@ public sealed class RetryPolicyOptions
 /// </summary>
 public static class RetryHelper
 {
+    private static readonly double MaxTimeSpanMilliseconds = TimeSpan.MaxValue.TotalMilliseconds;
+    private static readonly TimeSpan MaxTaskDelay = TimeSpan.FromMilliseconds(uint.MaxValue - 1d);
+
     /// <summary>
     /// Executes an async operation with retries.
     /// </summary>
@@ -101,7 +104,7 @@ public static class RetryHelper
                 var delay = CalculateDelay(attempt, options);
                 if (delay > TimeSpan.Zero)
                 {
-                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                    await Task.Delay(BoundToSupportedTaskDelay(delay), cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -119,10 +122,27 @@ public static class RetryHelper
         return options.DelayStrategy switch
         {
             RetryDelayStrategy.Fixed => options.InitialDelay,
-            RetryDelayStrategy.ExponentialBackoff => ApplyJitter(
-                TimeSpan.FromMilliseconds(options.InitialDelay.TotalMilliseconds * Math.Pow(2, attempt))),
+            RetryDelayStrategy.ExponentialBackoff => ApplyJitter(CalculateExponentialDelay(attempt, options.InitialDelay)),
             _ => options.InitialDelay
         };
+    }
+
+    private static TimeSpan CalculateExponentialDelay(int attempt, TimeSpan initialDelay)
+    {
+        if (initialDelay <= TimeSpan.Zero)
+        {
+            return initialDelay;
+        }
+
+        var exponentialMultiplier = Math.Pow(2, attempt);
+        var rawDelayMilliseconds = initialDelay.TotalMilliseconds * exponentialMultiplier;
+
+        if (double.IsInfinity(rawDelayMilliseconds) || rawDelayMilliseconds >= MaxTimeSpanMilliseconds)
+        {
+            return TimeSpan.MaxValue;
+        }
+
+        return TimeSpan.FromMilliseconds(rawDelayMilliseconds);
     }
 
     private static TimeSpan ApplyJitter(TimeSpan delay)
@@ -133,6 +153,13 @@ public static class RetryHelper
         }
 
         var jitterFactor = 0.8 + (Random.Shared.NextDouble() * 0.4);
-        return TimeSpan.FromMilliseconds(delay.TotalMilliseconds * jitterFactor);
+        var jitteredDelayMilliseconds = delay.TotalMilliseconds * jitterFactor;
+        var boundedDelayMilliseconds = Math.Min(jitteredDelayMilliseconds, MaxTimeSpanMilliseconds);
+        return TimeSpan.FromMilliseconds(boundedDelayMilliseconds);
+    }
+
+    private static TimeSpan BoundToSupportedTaskDelay(TimeSpan delay)
+    {
+        return delay <= MaxTaskDelay ? delay : MaxTaskDelay;
     }
 }

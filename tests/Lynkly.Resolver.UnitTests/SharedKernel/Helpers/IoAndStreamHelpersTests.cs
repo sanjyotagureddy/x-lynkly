@@ -11,13 +11,23 @@ public sealed class IoAndStreamHelpersTests
         var tempDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
         var filePath = Path.Combine(tempDirectory, "data.txt");
 
-        FileHelper.EnsureDirectoryExists(tempDirectory);
-        await FileHelper.WriteAllTextAsync(filePath, "a");
-        await FileHelper.WriteAllTextAsync(filePath, "b", append: true);
+        try
+        {
+            FileHelper.EnsureDirectoryExists(tempDirectory);
+            await FileHelper.WriteAllTextAsync(filePath, "a");
+            await FileHelper.WriteAllTextAsync(filePath, "b", append: true);
 
-        var content = await FileHelper.ReadAllTextAsync(filePath);
+            var content = await FileHelper.ReadAllTextAsync(filePath);
 
-        Assert.Equal("ab", content);
+            Assert.Equal("ab", content);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -48,10 +58,24 @@ public sealed class IoAndStreamHelpersTests
         Assert.Equal("lynkly", copiedText);
 
         var tempFile = Path.GetTempFileName();
-        await File.WriteAllTextAsync(tempFile, "file-content");
-        await using var fileStream = File.OpenRead(tempFile);
-        var fromFileStream = await StreamHelper.ToByteArrayAsync(fileStream);
-        Assert.Equal("file-content", Encoding.UTF8.GetString(fromFileStream));
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, "file-content");
+            await using var fileStream = File.OpenRead(tempFile);
+            var fromFileStream = await StreamHelper.ToByteArrayAsync(fileStream);
+            Assert.Equal("file-content", Encoding.UTF8.GetString(fromFileStream));
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+
+        source.Position = 3;
+        var tailBytes = await StreamHelper.ToByteArrayAsync(source);
+        Assert.Equal("kly", Encoding.UTF8.GetString(tailBytes));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => StreamHelper.ReadToEndAsync(null!));
         await Assert.ThrowsAsync<ArgumentNullException>(() => StreamHelper.ToByteArrayAsync(null!));

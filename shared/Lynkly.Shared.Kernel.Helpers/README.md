@@ -38,3 +38,6 @@ var result = await RetryHelper.ExecuteAsync(
 
 var hash = SecurityHelper.ComputeSha256("payload");
 ```
+
+## Dependency Rationale
+`JsonHelper` uses `Newtonsoft.Json` to provide reusable `JsonSerializerSettings`-based behavior and broad compatibility with existing polymorphic and contract customization scenarios used across .NET services. This package keeps that dependency isolated to JSON helper functionality.

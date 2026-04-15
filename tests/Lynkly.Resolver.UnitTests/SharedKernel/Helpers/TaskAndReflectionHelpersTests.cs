@@ -34,6 +34,13 @@ public sealed class TaskAndReflectionHelpersTests
         private string Secret => "hidden";
     }
 
+    private sealed class IndexedReflectionSample
+    {
+        public string Name { get; init; } = "lynkly";
+
+        public string this[int index] => index.ToString();
+    }
+
     [Fact]
     public async Task TaskHelper_WithTimeoutAsync_Should_Work()
     {
@@ -43,6 +50,13 @@ public sealed class TaskAndReflectionHelpersTests
         await Assert.ThrowsAsync<TimeoutException>(() => TaskHelper.WithTimeoutAsync(
             Task.Delay(TimeSpan.FromMilliseconds(100)).ContinueWith(_ => 1),
             TimeSpan.FromMilliseconds(1)));
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => TaskHelper.WithTimeoutAsync(
+            Task.Delay(TimeSpan.FromMilliseconds(100)).ContinueWith(_ => 1),
+            TimeSpan.FromSeconds(1),
+            cts.Token));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => TaskHelper.WithTimeoutAsync<int>(null!, TimeSpan.FromSeconds(1)));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => TaskHelper.WithTimeoutAsync(Task.FromResult(1), TimeSpan.Zero));
@@ -106,6 +120,9 @@ public sealed class TaskAndReflectionHelpersTests
         Assert.Equal("x", mapped.Name);
         Assert.Equal(5, mapped.Count);
         Assert.Equal(0, mapped.Skip);
+
+        var indexedMapped = ReflectionHelper.MapProperties<IndexedReflectionSample, Target>(new IndexedReflectionSample());
+        Assert.Equal("lynkly", indexedMapped.Name);
 
         Assert.Throws<ArgumentNullException>(() => ReflectionHelper.MapProperties<Source, Target>(null!));
     }

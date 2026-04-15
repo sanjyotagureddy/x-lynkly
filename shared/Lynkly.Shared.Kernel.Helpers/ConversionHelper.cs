@@ -27,6 +27,7 @@ public static class ConversionHelper
         }
 
         var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+        var isNullableTarget = Nullable.GetUnderlyingType(typeof(T)) is not null;
 
         try
         {
@@ -34,14 +35,14 @@ public static class ConversionHelper
             {
                 if (value is string enumString && Enum.TryParse(targetType, enumString, true, out var enumResult))
                 {
-                    converted = (T)enumResult;
+                    converted = ConvertEnum<T>(enumResult, targetType, isNullableTarget);
                     return true;
                 }
 
                 if (value.GetType().IsPrimitive)
                 {
                     var numericValue = Convert.ChangeType(value, Enum.GetUnderlyingType(targetType), formatProvider ?? CultureInfo.InvariantCulture);
-                    converted = (T)Enum.ToObject(targetType, numericValue!);
+                    converted = ConvertEnum<T>(Enum.ToObject(targetType, numericValue!), targetType, isNullableTarget);
                     return true;
                 }
             }
@@ -65,5 +66,18 @@ public static class ConversionHelper
             converted = default;
             return false;
         }
+    }
+
+    private static T ConvertEnum<T>(object enumValue, Type enumType, bool isNullableTarget)
+    {
+        if (!isNullableTarget)
+        {
+            return (T)enumValue;
+        }
+
+        var nullableType = typeof(Nullable<>).MakeGenericType(enumType);
+        var nullableValue = Activator.CreateInstance(nullableType, enumValue)
+            ?? throw new InvalidCastException($"Cannot convert value to nullable enum type '{nullableType.Name}'.");
+        return (T)nullableValue;
     }
 }

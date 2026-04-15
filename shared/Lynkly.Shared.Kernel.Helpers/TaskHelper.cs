@@ -17,16 +17,7 @@ public static class TaskHelper
             throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than zero.");
         }
 
-        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var delayTask = Task.Delay(timeout, linkedCts.Token);
-        var completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-
-        if (completedTask == delayTask)
-        {
-            throw new TimeoutException($"Task execution exceeded timeout of {timeout}.");
-        }
-
-        return await task.ConfigureAwait(false);
+        return await task.WaitAsync(timeout, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

@@ -6,7 +6,7 @@ namespace Lynkly.Shared.Kernel.Helpers;
 public static class FileHelper
 {
     /// <summary>
-    /// Ensures that a directory exists for the supplied path.
+    /// Ensures that the supplied directory path exists.
     /// </summary>
     public static void EnsureDirectoryExists(string path)
     {

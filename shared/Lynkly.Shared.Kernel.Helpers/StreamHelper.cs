@@ -31,7 +31,22 @@ public static class StreamHelper
 
         if (stream is MemoryStream memoryStream)
         {
-            return memoryStream.ToArray();
+            if (!memoryStream.CanSeek || memoryStream.Position <= 0)
+            {
+                return memoryStream.ToArray();
+            }
+
+            if (memoryStream.Position >= memoryStream.Length)
+            {
+                return [];
+            }
+
+            var bytes = memoryStream.ToArray();
+            var start = checked((int)memoryStream.Position);
+            var count = checked((int)(memoryStream.Length - memoryStream.Position));
+            var remainingBytes = new byte[count];
+            Buffer.BlockCopy(bytes, start, remainingBytes, 0, count);
+            return remainingBytes;
         }
 
         using var target = new MemoryStream();

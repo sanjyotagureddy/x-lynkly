@@ -55,7 +55,9 @@ public static class SecurityHelper
 
         var leftBytes = Encoding.UTF8.GetBytes(left);
         var rightBytes = Encoding.UTF8.GetBytes(right);
+        var leftHash = SHA256.HashData(leftBytes);
+        var rightHash = SHA256.HashData(rightBytes);
 
-        return CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
+        return CryptographicOperations.FixedTimeEquals(leftHash, rightHash);
     }
 }

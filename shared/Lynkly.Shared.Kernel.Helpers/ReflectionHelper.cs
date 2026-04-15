@@ -53,12 +53,13 @@ public static class ReflectionHelper
         ArgumentNullException.ThrowIfNull(source);
 
         var target = new TTarget();
-        var sourceProperties = typeof(TSource).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        var sourceProperties = source.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Where(static property => property.CanRead && property.GetIndexParameters().Length == 0);
         var targetProperties = typeof(TTarget).GetProperties(BindingFlags.Instance | BindingFlags.Public)
-            .Where(static property => property.CanWrite)
+            .Where(static property => property.CanWrite && property.GetIndexParameters().Length == 0)
             .ToDictionary(static property => property.Name, StringComparer.Ordinal);
 
-        foreach (var sourceProperty in sourceProperties.Where(static property => property.CanRead))
+        foreach (var sourceProperty in sourceProperties)
         {
             if (!targetProperties.TryGetValue(sourceProperty.Name, out var targetProperty))
             {
