@@ -14,7 +14,7 @@ public sealed class RequestContextMiddleware(
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        var appContext = AppContext.FromHttpContext(httpContext, environment.ApplicationName);
+        var appContext = Lynkly.Shared.Kernel.Context.AppContext.FromHttpContext(httpContext, environment.ApplicationName);
 
         foreach (var enricher in enrichers)
         {
@@ -23,17 +23,30 @@ public sealed class RequestContextMiddleware(
 
         using (RequestContextScope.BeginScope(appContext))
         {
+            var responseEnriched = 0;
+
             httpContext.Response.OnStarting(() =>
             {
-                foreach (var enricher in enrichers)
+                if (Interlocked.Exchange(ref responseEnriched, 1) == 0)
                 {
-                    enricher.EnrichResponse(httpContext, appContext);
+                    foreach (var enricher in enrichers)
+                    {
+                        enricher.EnrichResponse(httpContext, appContext);
+                    }
                 }
 
                 return Task.CompletedTask;
             });
 
             await next(httpContext);
+
+            if (Interlocked.Exchange(ref responseEnriched, 1) == 0)
+            {
+                foreach (var enricher in enrichers)
+                {
+                    enricher.EnrichResponse(httpContext, appContext);
+                }
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 using Lynkly.Resolver.API.Middlewares;
 using Lynkly.Shared.Kernel.Context;
+using RequestAppContext = Lynkly.Shared.Kernel.Context.AppContext;
 using Lynkly.Shared.Kernel.Context.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -15,9 +16,9 @@ public sealed class RequestContextFrameworkTests
         httpContext.TraceIdentifier = "trace-id-123";
         httpContext.Request.Method = "GET";
         httpContext.Request.Path = "/api/v1/links";
-        httpContext.Request.Headers[AppContext.CorrelationIdHeaderName] = "corr-001";
+        httpContext.Request.Headers[RequestAppContext.CorrelationIdHeaderName] = "corr-001";
 
-        var appContext = AppContext.FromHttpContext(httpContext, "Lynkly.Resolver.API");
+        var appContext = RequestAppContext.FromHttpContext(httpContext, "Lynkly.Resolver.API");
 
         Assert.Equal("Lynkly.Resolver.API", appContext.ApplicationName);
         Assert.Equal("corr-001", appContext.CorrelationId);
@@ -33,7 +34,7 @@ public sealed class RequestContextFrameworkTests
         var httpContext = new DefaultHttpContext();
         httpContext.TraceIdentifier = "trace-id-xyz";
 
-        var appContext = AppContext.FromHttpContext(httpContext, "Lynkly.Resolver.API");
+        var appContext = RequestAppContext.FromHttpContext(httpContext, "Lynkly.Resolver.API");
 
         Assert.Equal("trace-id-xyz", appContext.CorrelationId);
     }
@@ -41,7 +42,7 @@ public sealed class RequestContextFrameworkTests
     [Fact]
     public void RequestContextScope_Should_Set_And_Restore_Current_Context()
     {
-        var originalContext = new AppContext
+        var originalContext = new RequestAppContext
         {
             ApplicationName = "Original",
             CorrelationId = "orig-corr",
@@ -52,7 +53,7 @@ public sealed class RequestContextFrameworkTests
             RequestedAtUtc = DateTimeOffset.UtcNow
         };
 
-        var nestedContext = new AppContext
+        var nestedContext = new RequestAppContext
         {
             ApplicationName = "Nested",
             CorrelationId = "nested-corr",
@@ -87,7 +88,7 @@ public sealed class RequestContextFrameworkTests
         };
 
         var enricher = new RecordingEnricher();
-        AppContext? capturedDuringNext = null;
+        RequestAppContext? capturedDuringNext = null;
 
         RequestDelegate next = _ =>
         {
@@ -108,7 +109,7 @@ public sealed class RequestContextFrameworkTests
         Assert.NotNull(capturedDuringNext);
         Assert.Equal("trace-id-next", capturedDuringNext!.CorrelationId);
         Assert.Null(RequestContextScope.Current);
-        Assert.Equal("trace-id-next", httpContext.Response.Headers[AppContext.CorrelationIdHeaderName].ToString());
+        Assert.Equal("trace-id-next", httpContext.Response.Headers[RequestAppContext.CorrelationIdHeaderName].ToString());
     }
 
     private sealed class RecordingEnricher : IRequestContextEnricher
@@ -117,16 +118,16 @@ public sealed class RequestContextFrameworkTests
 
         public int EnrichResponseCallCount { get; private set; }
 
-        public void EnrichRequest(HttpContext httpContext, AppContext appContext)
+        public void EnrichRequest(HttpContext httpContext, RequestAppContext appContext)
         {
             EnrichRequestCallCount++;
-            httpContext.Request.Headers[AppContext.CorrelationIdHeaderName] = appContext.CorrelationId;
+            httpContext.Request.Headers[RequestAppContext.CorrelationIdHeaderName] = appContext.CorrelationId;
         }
 
-        public void EnrichResponse(HttpContext httpContext, AppContext appContext)
+        public void EnrichResponse(HttpContext httpContext, RequestAppContext appContext)
         {
             EnrichResponseCallCount++;
-            httpContext.Response.Headers[AppContext.CorrelationIdHeaderName] = appContext.CorrelationId;
+            httpContext.Response.Headers[RequestAppContext.CorrelationIdHeaderName] = appContext.CorrelationId;
         }
     }
 
@@ -136,7 +137,7 @@ public sealed class RequestContextFrameworkTests
 
         public string ApplicationName { get; set; } = "Lynkly";
 
-        public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+        public string ContentRootPath { get; set; } = System.AppContext.BaseDirectory;
 
         public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
             new Microsoft.Extensions.FileProviders.NullFileProvider();
