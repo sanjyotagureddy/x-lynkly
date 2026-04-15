@@ -48,11 +48,22 @@ public sealed class IoAndStreamHelpersTests
         source.Position = 0;
 
         var bytes = await StreamHelper.ToByteArrayAsync(source);
-        source.Position = 0;
 
-        await using var copy = await StreamHelper.CopyToMemoryAsync(source);
-        var copiedText = Encoding.UTF8.GetString(copy.ToArray());
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, "file-content");
 
+            await using var fileStream = File.OpenRead(tempFile);
+            var fromFileStream = await StreamHelper.ToByteArrayAsync(fileStream);
+            Assert.Equal("file-content", Encoding.UTF8.GetString(fromFileStream));
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
         Assert.Equal("lynkly", text);
         Assert.Equal("lynkly", Encoding.UTF8.GetString(bytes));
         Assert.Equal("lynkly", copiedText);
