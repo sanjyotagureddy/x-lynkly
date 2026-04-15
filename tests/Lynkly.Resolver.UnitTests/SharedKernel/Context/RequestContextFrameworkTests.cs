@@ -102,7 +102,6 @@ public sealed class RequestContextFrameworkTests
         httpContext.TraceIdentifier = "trace-id-next";
 
         await middleware.InvokeAsync(httpContext);
-        await httpContext.Response.StartAsync();
 
         Assert.Equal(1, enricher.EnrichRequestCallCount);
         Assert.Equal(1, enricher.EnrichResponseCallCount);

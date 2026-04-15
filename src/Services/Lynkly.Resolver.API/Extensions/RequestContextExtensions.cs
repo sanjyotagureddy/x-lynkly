@@ -2,7 +2,6 @@ using Lynkly.Resolver.API.Middlewares;
 using Lynkly.Shared.Kernel.Context.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Lynkly.Resolver.API.Extensions;
 
@@ -13,8 +12,6 @@ public static class RequestContextExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddKernelContext();
-        services.TryAddSingleton<RequestContextMiddleware>();
-
         return services;
     }
 

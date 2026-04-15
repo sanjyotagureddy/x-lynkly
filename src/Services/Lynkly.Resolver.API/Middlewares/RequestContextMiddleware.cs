@@ -25,28 +25,28 @@ public sealed class RequestContextMiddleware(
         {
             var responseEnriched = 0;
 
-            httpContext.Response.OnStarting(() =>
+            void EnrichResponseOnce()
             {
-                if (Interlocked.Exchange(ref responseEnriched, 1) == 0)
+                if (Interlocked.Exchange(ref responseEnriched, 1) != 0)
                 {
-                    foreach (var enricher in enrichers)
-                    {
-                        enricher.EnrichResponse(httpContext, appContext);
-                    }
+                    return;
                 }
 
-                return Task.CompletedTask;
-            });
-
-            await next(httpContext);
-
-            if (Interlocked.Exchange(ref responseEnriched, 1) == 0)
-            {
                 foreach (var enricher in enrichers)
                 {
                     enricher.EnrichResponse(httpContext, appContext);
                 }
             }
+
+            httpContext.Response.OnStarting(() =>
+            {
+                EnrichResponseOnce();
+                return Task.CompletedTask;
+            });
+
+            await next(httpContext);
+
+            EnrichResponseOnce();
         }
     }
 }
