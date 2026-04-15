@@ -140,6 +140,27 @@ public sealed class NetworkingAndRetryHelpersTests
         Assert.Equal(2, attempts);
     }
 
+    [Fact]
+    public async Task RetryHelper_ExponentialBackoff_Should_HandleZeroDelay()
+    {
+        var attempts = 0;
+
+        await RetryHelper.ExecuteAsync(
+            _ =>
+            {
+                attempts++;
+                return attempts < 2 ? Task.FromException(new InvalidOperationException()) : Task.CompletedTask;
+            },
+            new RetryPolicyOptions
+            {
+                RetryCount = 1,
+                InitialDelay = TimeSpan.Zero,
+                DelayStrategy = RetryDelayStrategy.ExponentialBackoff
+            });
+
+        Assert.Equal(2, attempts);
+    }
+
     private sealed class TestMessageHandler(HttpStatusCode statusCode, string content) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)

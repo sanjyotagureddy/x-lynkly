@@ -50,7 +50,17 @@ public static class ConversionHelper
             converted = (T?)result;
             return true;
         }
-        catch
+        catch (FormatException)
+        {
+            converted = default;
+            return false;
+        }
+        catch (InvalidCastException)
+        {
+            converted = default;
+            return false;
+        }
+        catch (OverflowException)
         {
             converted = default;
             return false;

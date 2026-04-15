@@ -7,10 +7,7 @@ namespace Lynkly.Shared.Kernel.Helpers;
 /// </summary>
 public static class JsonHelper
 {
-    /// <summary>
-    /// Default JSON settings used by helper methods.
-    /// </summary>
-    public static JsonSerializerSettings DefaultSettings { get; } = new()
+    private static readonly JsonSerializerSettings DefaultSettings = new()
     {
         NullValueHandling = NullValueHandling.Ignore,
         DateParseHandling = DateParseHandling.DateTimeOffset
@@ -21,7 +18,12 @@ public static class JsonHelper
     /// </summary>
     public static JsonSerializerSettings CreateSettings(Action<JsonSerializerSettings>? configure = null)
     {
-        var settings = CloneSettings(DefaultSettings);
+        var settings = new JsonSerializerSettings
+        {
+            NullValueHandling = DefaultSettings.NullValueHandling,
+            DateParseHandling = DefaultSettings.DateParseHandling
+        };
+
         configure?.Invoke(settings);
         return settings;
     }
@@ -90,11 +92,5 @@ public static class JsonHelper
             value = default;
             return false;
         }
-    }
-
-    private static JsonSerializerSettings CloneSettings(JsonSerializerSettings source)
-    {
-        var serialized = JsonConvert.SerializeObject(source);
-        return JsonConvert.DeserializeObject<JsonSerializerSettings>(serialized) ?? new JsonSerializerSettings();
     }
 }

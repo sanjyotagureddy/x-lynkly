@@ -85,6 +85,8 @@ public sealed class SecurityValidationMathRandomConversionTests
 
         Assert.False(ConversionHelper.TryConvert<int>(null, out _));
         Assert.False(ConversionHelper.TryConvert<int>("bad", out _));
+        Assert.False(ConversionHelper.TryConvert<int>(new object(), out _));
+        Assert.False(ConversionHelper.TryConvert<int>(long.MaxValue, out _));
 
         Assert.Equal(5, ConversionHelper.ConvertOrDefault("bad", 5));
         Assert.Equal(10, ConversionHelper.ConvertOrDefault("10", 5));

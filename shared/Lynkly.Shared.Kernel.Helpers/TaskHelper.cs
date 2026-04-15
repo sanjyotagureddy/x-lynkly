@@ -26,7 +26,6 @@ public static class TaskHelper
             throw new TimeoutException($"Task execution exceeded timeout of {timeout}.");
         }
 
-        linkedCts.Cancel();
         return await task.ConfigureAwait(false);
     }
 

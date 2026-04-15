@@ -119,8 +119,20 @@ public static class RetryHelper
         return options.DelayStrategy switch
         {
             RetryDelayStrategy.Fixed => options.InitialDelay,
-            RetryDelayStrategy.ExponentialBackoff => TimeSpan.FromMilliseconds(options.InitialDelay.TotalMilliseconds * Math.Pow(2, attempt)),
+            RetryDelayStrategy.ExponentialBackoff => ApplyJitter(
+                TimeSpan.FromMilliseconds(options.InitialDelay.TotalMilliseconds * Math.Pow(2, attempt))),
             _ => options.InitialDelay
         };
+    }
+
+    private static TimeSpan ApplyJitter(TimeSpan delay)
+    {
+        if (delay <= TimeSpan.Zero)
+        {
+            return delay;
+        }
+
+        var jitterFactor = 0.8 + (Random.Shared.NextDouble() * 0.4);
+        return TimeSpan.FromMilliseconds(delay.TotalMilliseconds * jitterFactor);
     }
 }

@@ -20,7 +20,7 @@ public static class CollectionExtensions
         where T : class
     {
         ArgumentNullException.ThrowIfNull(source);
-        return source.Where(item => item is not null)!;
+        return source.OfType<T>();
     }
 
     /// <summary>
