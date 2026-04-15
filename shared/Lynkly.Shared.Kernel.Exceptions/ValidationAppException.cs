@@ -1,7 +1,6 @@
 using FluentValidation.Results;
-using Lynkly.Shared.Kernel.Exceptions;
 
-namespace Lynkly.Shared.Kernel.Validation;
+namespace Lynkly.Shared.Kernel.Exceptions;
 
 public sealed class ValidationAppException : BaseAppException
 {

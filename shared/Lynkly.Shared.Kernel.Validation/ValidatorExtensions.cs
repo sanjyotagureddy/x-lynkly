@@ -1,5 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
+using Lynkly.Shared.Kernel.Exceptions;
 
 namespace Lynkly.Shared.Kernel.Validation;
 
