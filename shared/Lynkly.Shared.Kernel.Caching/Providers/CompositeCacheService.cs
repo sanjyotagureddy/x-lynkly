@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Lynkly.Shared.Kernel.Caching.Abstractions;
 using Lynkly.Shared.Kernel.Caching.DependencyInjection;
 
@@ -8,7 +7,7 @@ internal sealed class CompositeCacheService : ICacheService
 {
     private readonly IReadOnlyList<ICacheProvider> _providers;
     private readonly CacheServiceRegistrationOptions _registrationOptions;
-    private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim[] _keyLocks = CreateKeyLocks();
 
     public CompositeCacheService(
         IEnumerable<ICacheProvider> providers,
@@ -118,7 +117,7 @@ internal sealed class CompositeCacheService : ICacheService
             return cached;
         }
 
-        var keyLock = _keyLocks.GetOrAdd(key.Value, _ => new SemaphoreSlim(1, 1));
+        var keyLock = GetKeyLock(key.Value);
         await keyLock.WaitAsync(cancellationToken);
 
         try
@@ -139,5 +138,22 @@ internal sealed class CompositeCacheService : ICacheService
         {
             keyLock.Release();
         }
+    }
+
+    private static SemaphoreSlim[] CreateKeyLocks()
+    {
+        var locks = new SemaphoreSlim[64];
+        for (var i = 0; i < locks.Length; i++)
+        {
+            locks[i] = new SemaphoreSlim(1, 1);
+        }
+
+        return locks;
+    }
+
+    private SemaphoreSlim GetKeyLock(string key)
+    {
+        var index = (int)(unchecked((uint)StringComparer.Ordinal.GetHashCode(key)) % (uint)_keyLocks.Length);
+        return _keyLocks[index];
     }
 }

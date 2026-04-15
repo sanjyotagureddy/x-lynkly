@@ -82,6 +82,46 @@ public sealed class CacheServiceTests
     }
 
     [Fact]
+    public async Task GetOrCreateAsync_Should_Only_Invoke_Factory_Once_For_Concurrent_Calls()
+    {
+        var services = new ServiceCollection();
+        services.AddKernelCaching();
+
+        await using var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICacheService>();
+        var key = new CacheKey<string>("links:concurrent");
+        var invocationCount = 0;
+        var factoryStarted = new ManualResetEventSlim(false);
+        var releaseFactory = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        Func<CancellationToken, Task<string>> factory = async _ =>
+        {
+            Interlocked.Increment(ref invocationCount);
+            factoryStarted.Set();
+            await releaseFactory.Task;
+            return "https://concurrent.example";
+        };
+
+        var firstTask =
+            cache.GetOrCreateAsync(
+                key,
+                factory);
+
+        factoryStarted.Wait();
+
+        var parallelTasks = Enumerable.Range(0, 7)
+            .Select(_ => cache.GetOrCreateAsync(key, factory))
+            .ToArray();
+
+        releaseFactory.SetResult();
+
+        var values = await Task.WhenAll(parallelTasks.Prepend(firstTask));
+
+        Assert.All(values, value => Assert.Equal("https://concurrent.example", value));
+        Assert.Equal(1, invocationCount);
+    }
+
+    [Fact]
     public void AddKernelCaching_Should_Throw_When_DistributedOnly_And_IDistributedCache_Is_Not_Registered()
     {
         var services = new ServiceCollection();
