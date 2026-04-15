@@ -6,12 +6,18 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
-    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NetArchTest.Rules" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -21,7 +27,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
     <ProjectReference Include="..\..\src\Core\Lynkly.Resolver.Domain\Lynkly.Resolver.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Persistence\Lynkly.Resolver.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Persistence\Lynkly.Resolver.Infrastructure.Persistence.csproj" />
     <ProjectReference Include="..\..\src\Services\Lynkly.Resolver.API\Lynkly.Resolver.API.csproj" />
   </ItemGroup>
 

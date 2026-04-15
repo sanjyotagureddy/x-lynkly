@@ -6,12 +6,18 @@
 
   <ItemGroup>
     <PackageReference Include="Bogus" />
-    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Testcontainers" />
     <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -19,9 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Caching\Lynkly.Resolver.Infrastructure.Caching.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Messaging\Lynkly.Resolver.Infrastructure.Messaging.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Persistence\Lynkly.Resolver.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Caching\Lynkly.Resolver.Infrastructure.Caching.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Messaging\Lynkly.Resolver.Infrastructure.Messaging.csproj" />
+    <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Persistence\Lynkly.Resolver.Infrastructure.Persistence.csproj" />
   </ItemGroup>
 
 </Project>
