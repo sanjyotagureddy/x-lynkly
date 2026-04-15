@@ -35,23 +35,36 @@ public static class TaskHelper
             throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism), "Degree of parallelism must be greater than zero.");
         }
 
-        using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism, maxDegreeOfParallelism);
-        var tasks = taskFactories.Select(async factory =>
+        var factories = taskFactories as IList<Func<CancellationToken, Task<T>>> ?? taskFactories.ToList();
+        if (factories.Count == 0)
         {
-            ArgumentNullException.ThrowIfNull(factory);
-            await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return Array.Empty<T>();
+        }
 
-            try
-            {
-                return await factory(cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
+        var results = new T[factories.Count];
+        var workerCount = Math.Min(maxDegreeOfParallelism, factories.Count);
+        var nextIndex = -1;
 
-        return await Task.WhenAll(tasks).ConfigureAwait(false);
+        var workers = Enumerable.Range(0, workerCount).Select(_ => Task.Run(async () =>
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var index = Interlocked.Increment(ref nextIndex);
+                if (index >= factories.Count)
+                {
+                    break;
+                }
+
+                var factory = factories[index];
+                ArgumentNullException.ThrowIfNull(factory);
+                results[index] = await factory(cancellationToken).ConfigureAwait(false);
+            }
+        }, cancellationToken));
+
+        await Task.WhenAll(workers).ConfigureAwait(false);
+        return results;
     }
 
     /// <summary>

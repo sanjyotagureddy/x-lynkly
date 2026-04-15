@@ -112,4 +112,11 @@ public sealed class CoreHelpersTests
         Assert.Equal(2, left);
         Assert.Equal(1, right);
     }
+
+    [Fact]
+    public void ConversionHelper_TryConvert_Should_HandleNullableValueTypes()
+    {
+        Assert.True(ConversionHelper.TryConvert<int?>("42", out var converted));
+        Assert.Equal(42, converted);
+    }
 }
