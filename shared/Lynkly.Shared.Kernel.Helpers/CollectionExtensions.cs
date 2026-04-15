@@ -10,7 +10,22 @@ public static class CollectionExtensions
     /// </summary>
     public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
     {
-        return source is null || !source.Any();
+        if (source is null)
+        {
+            return true;
+        }
+
+        if (source is ICollection<T> collection)
+        {
+            return collection.Count == 0;
+        }
+
+        if (source is IReadOnlyCollection<T> readOnlyCollection)
+        {
+            return readOnlyCollection.Count == 0;
+        }
+
+        return !source.Any();
     }
 
     /// <summary>
