@@ -137,7 +137,7 @@ public static class RetryHelper
         var exponentialMultiplier = Math.Pow(2, attempt);
         var rawDelayMilliseconds = initialDelay.TotalMilliseconds * exponentialMultiplier;
 
-        if (double.IsInfinity(rawDelayMilliseconds) || rawDelayMilliseconds >= MaxTimeSpanMilliseconds)
+        if (double.IsNaN(rawDelayMilliseconds) || double.IsInfinity(rawDelayMilliseconds) || rawDelayMilliseconds >= MaxTimeSpanMilliseconds)
         {
             return TimeSpan.MaxValue;
         }

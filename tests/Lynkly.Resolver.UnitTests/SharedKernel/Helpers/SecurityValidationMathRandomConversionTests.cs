@@ -20,6 +20,7 @@ public sealed class SecurityValidationMathRandomConversionTests
         Assert.Equal("lynkly", SecurityHelper.FromBase64(base64));
         Assert.True(SecurityHelper.FixedTimeEquals("a", "a"));
         Assert.False(SecurityHelper.FixedTimeEquals("a", "b"));
+        Assert.False(SecurityHelper.FixedTimeEquals("a", "aa"));
         Assert.True(SecurityHelper.FixedTimeEquals(null, null));
         Assert.False(SecurityHelper.FixedTimeEquals(null, "a"));
 

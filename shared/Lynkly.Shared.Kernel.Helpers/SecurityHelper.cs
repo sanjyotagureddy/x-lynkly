@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -55,9 +56,16 @@ public static class SecurityHelper
 
         var leftBytes = Encoding.UTF8.GetBytes(left);
         var rightBytes = Encoding.UTF8.GetBytes(right);
-        var leftHash = SHA256.HashData(leftBytes);
-        var rightHash = SHA256.HashData(rightBytes);
+        var maxLength = Math.Max(leftBytes.Length, rightBytes.Length);
+        var comparisonLength = maxLength + sizeof(int);
+        var leftComparisonBytes = new byte[comparisonLength];
+        var rightComparisonBytes = new byte[comparisonLength];
 
-        return CryptographicOperations.FixedTimeEquals(leftHash, rightHash);
+        Buffer.BlockCopy(leftBytes, 0, leftComparisonBytes, 0, leftBytes.Length);
+        Buffer.BlockCopy(rightBytes, 0, rightComparisonBytes, 0, rightBytes.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(leftComparisonBytes.AsSpan(maxLength), leftBytes.Length);
+        BinaryPrimitives.WriteInt32LittleEndian(rightComparisonBytes.AsSpan(maxLength), rightBytes.Length);
+
+        return CryptographicOperations.FixedTimeEquals(leftComparisonBytes, rightComparisonBytes);
     }
 }

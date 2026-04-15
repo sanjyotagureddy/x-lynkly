@@ -68,14 +68,14 @@ public static class ConversionHelper
         }
     }
 
-    private static T ConvertEnum<T>(object enumValue, Type enumType, bool isNullableTarget)
+    private static T ConvertEnum<T>(object enumValue, Type underlyingEnumType, bool isNullableTarget)
     {
         if (!isNullableTarget)
         {
             return (T)enumValue;
         }
 
-        var nullableType = typeof(Nullable<>).MakeGenericType(enumType);
+        var nullableType = typeof(Nullable<>).MakeGenericType(underlyingEnumType);
         var nullableValue = Activator.CreateInstance(nullableType, enumValue)
             ?? throw new InvalidCastException($"Cannot convert value to nullable enum type '{nullableType.Name}'.");
         return (T)nullableValue;

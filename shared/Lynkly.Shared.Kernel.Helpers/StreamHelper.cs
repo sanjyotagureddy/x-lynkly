@@ -31,7 +31,7 @@ public static class StreamHelper
 
         if (stream is MemoryStream memoryStream)
         {
-            if (!memoryStream.CanSeek || memoryStream.Position <= 0)
+            if (!memoryStream.CanSeek)
             {
                 return memoryStream.ToArray();
             }

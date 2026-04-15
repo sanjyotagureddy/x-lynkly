@@ -34,7 +34,7 @@ public sealed class TaskAndReflectionHelpersTests
         private string Secret => "hidden";
     }
 
-    private sealed class IndexedReflectionSample
+    private sealed class ReflectionSampleWithIndexer
     {
         public string Name { get; init; } = "lynkly";
 
@@ -121,7 +121,7 @@ public sealed class TaskAndReflectionHelpersTests
         Assert.Equal(5, mapped.Count);
         Assert.Equal(0, mapped.Skip);
 
-        var indexedMapped = ReflectionHelper.MapProperties<IndexedReflectionSample, Target>(new IndexedReflectionSample());
+        var indexedMapped = ReflectionHelper.MapProperties<ReflectionSampleWithIndexer, Target>(new ReflectionSampleWithIndexer());
         Assert.Equal("lynkly", indexedMapped.Name);
 
         Assert.Throws<ArgumentNullException>(() => ReflectionHelper.MapProperties<Source, Target>(null!));
