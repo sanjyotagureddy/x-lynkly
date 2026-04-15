@@ -7,7 +7,7 @@ public sealed class LinkNotFoundException : BaseAppException
             ExceptionCodes.UrlShortener.LinkNotFound,
             $"Link '{linkIdentifier}' was not found.",
             StatusCodes.NotFound,
-            [new ErrorDetail("linkId", $"Link '{linkIdentifier}' was not found.")])
+            [new ErrorDetail("linkIdentifier", $"Link '{linkIdentifier}' was not found.")])
     {
     }
 

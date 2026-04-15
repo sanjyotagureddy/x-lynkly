@@ -28,6 +28,4 @@ public abstract class BaseAppException : Exception
     public int StatusCode { get; }
 
     public IReadOnlyList<ErrorDetail> Errors { get; }
-
-    public override string Message => base.Message;
 }
