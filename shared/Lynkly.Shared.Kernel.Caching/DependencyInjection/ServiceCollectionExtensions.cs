@@ -55,9 +55,9 @@ public static class ServiceCollectionExtensions
             return;
         }
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICacheProvider>(serviceProvider =>
+        services.AddSingleton<ICacheProvider>(serviceProvider =>
             new InMemoryCacheProvider(
-                serviceProvider.GetRequiredService<IMemoryCache>())));
+                serviceProvider.GetRequiredService<IMemoryCache>()));
     }
 
     private static void RegisterDistributedProvider(
@@ -69,9 +69,9 @@ public static class ServiceCollectionExtensions
             return;
         }
 
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICacheProvider>(serviceProvider =>
+        services.AddSingleton<ICacheProvider>(serviceProvider =>
             new DistributedCacheProvider(
                 serviceProvider.GetService<IDistributedCache>(),
-                serviceProvider.GetRequiredService<ICacheSerializer>())));
+                serviceProvider.GetRequiredService<ICacheSerializer>()));
     }
 }
