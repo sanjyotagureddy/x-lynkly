@@ -92,8 +92,11 @@ public sealed class PersistenceModelConfigurationTests
 
     private static AppDbContext CreateContext()
     {
+        var connectionString = Environment.GetEnvironmentVariable("LYNKLY_TEST_DB_CONNECTION")
+            ?? "Host=localhost;Database=lynkly_test";
+
         var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql("Host=localhost;Database=lynkly_test;Username=lynkly;Password=lynkly")
+            .UseNpgsql(connectionString)
             .Options;
 
         return new AppDbContext(options);
