@@ -10,6 +10,7 @@
   </Folder>
   <Folder Name="/shared/">
     <Project Path="shared/Lynkly.Shared.Kernel.Caching/Lynkly.Shared.Kernel.Caching.csproj" />
+    <Project Path="shared/Lynkly.Shared.Kernel.Context/Lynkly.Shared.Kernel.Context.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Core/Lynkly.Shared.Kernel.Core.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Exceptions/Lynkly.Shared.Kernel.Exceptions.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Helpers/Lynkly.Shared.Kernel.Helpers.csproj" />

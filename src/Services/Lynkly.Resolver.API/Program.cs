@@ -1,3 +1,4 @@
+using Lynkly.Resolver.API.Extensions;
 using lynkly.ServiceDefaults;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +12,7 @@ builder.Services
 	.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer();
 builder.Services.AddAuthorization();
+builder.Services.AddRequestContextSupport();
 
 var app = builder.Build();
 
@@ -20,6 +22,8 @@ if (app.Environment.IsDevelopment())
 {
 	app.MapOpenApi();
 }
+
+app.UseRequestContextSupport();
 
 app.UseAuthentication();
 app.UseAuthorization();
