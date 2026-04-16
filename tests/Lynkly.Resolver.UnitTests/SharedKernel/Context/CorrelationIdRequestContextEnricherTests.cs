@@ -1,8 +1,8 @@
 using Lynkly.Resolver.API.Middlewares;
 using Lynkly.Shared.Kernel.Context;
+using Lynkly.Shared.Kernel.Core;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
-using AppContext = Lynkly.Shared.Kernel.Context.AppContext;
 
 namespace Lynkly.Resolver.UnitTests.SharedKernel.Context;
 
@@ -15,14 +15,14 @@ public sealed class CorrelationIdRequestContextEnricherTests
     [Fact]
     public void EnrichRequest_WithNullHttpContext_ThrowsArgumentNullException()
     {
-        var ctx = MakeAppContext();
+        var ctx = MakeAppCallContext();
 
         Assert.Throws<ArgumentNullException>(() =>
             _enricher.EnrichRequest(null!, ctx));
     }
 
     [Fact]
-    public void EnrichRequest_WithNullAppContext_ThrowsArgumentNullException()
+    public void EnrichRequest_WithNullAppCallContext_ThrowsArgumentNullException()
     {
         var httpContext = new DefaultHttpContext();
 
@@ -36,7 +36,7 @@ public sealed class CorrelationIdRequestContextEnricherTests
     public void EnrichRequest_WhenCorrelationIdAlreadySet_DoesNotOverride()
     {
         var httpContext = new DefaultHttpContext();
-        var ctx = MakeAppContext(correlationId: "existing-id");
+        var ctx = MakeAppCallContext(correlationId: "existing-id");
 
         _enricher.EnrichRequest(httpContext, ctx);
 
@@ -47,8 +47,8 @@ public sealed class CorrelationIdRequestContextEnricherTests
     public void EnrichRequest_WhenHeaderPresent_UsesHeaderValue()
     {
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Correlation-Id"] = "header-corr-id";
-        var ctx = MakeAppContext();
+        httpContext.Request.Headers[Constants.Headers.CorrelationId] = "header-corr-id";
+        var ctx = MakeAppCallContext();
 
         _enricher.EnrichRequest(httpContext, ctx);
 
@@ -59,8 +59,8 @@ public sealed class CorrelationIdRequestContextEnricherTests
     public void EnrichRequest_WhenHeaderIsWhitespace_GeneratesNewId()
     {
         var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Correlation-Id"] = "   ";
-        var ctx = MakeAppContext();
+        httpContext.Request.Headers[Constants.Headers.CorrelationId] = "   ";
+        var ctx = MakeAppCallContext();
 
         _enricher.EnrichRequest(httpContext, ctx);
 
@@ -73,7 +73,7 @@ public sealed class CorrelationIdRequestContextEnricherTests
     public void EnrichRequest_WhenNoHeaderAndNoExistingId_GeneratesNewGuid()
     {
         var httpContext = new DefaultHttpContext();
-        var ctx = MakeAppContext();
+        var ctx = MakeAppCallContext();
 
         _enricher.EnrichRequest(httpContext, ctx);
 
@@ -87,14 +87,14 @@ public sealed class CorrelationIdRequestContextEnricherTests
     [Fact]
     public void EnrichResponse_WithNullHttpContext_ThrowsArgumentNullException()
     {
-        var ctx = MakeAppContext();
+        var ctx = MakeAppCallContext();
 
         Assert.Throws<ArgumentNullException>(() =>
             _enricher.EnrichResponse(null!, ctx));
     }
 
     [Fact]
-    public void EnrichResponse_WithNullAppContext_ThrowsArgumentNullException()
+    public void EnrichResponse_WithNullAppCallContext_ThrowsArgumentNullException()
     {
         var httpContext = new DefaultHttpContext();
 
@@ -108,41 +108,41 @@ public sealed class CorrelationIdRequestContextEnricherTests
     public void EnrichResponse_WhenCorrelationIdIsSet_WritesResponseHeader()
     {
         var httpContext = new DefaultHttpContext();
-        var ctx = MakeAppContext(correlationId: "resp-corr");
+        var ctx = MakeAppCallContext(correlationId: "resp-corr");
 
         _enricher.EnrichResponse(httpContext, ctx);
 
-        Assert.Equal("resp-corr", httpContext.Response.Headers["X-Correlation-Id"].ToString());
+        Assert.Equal("resp-corr", httpContext.Response.Headers[Constants.Headers.CorrelationId].ToString());
     }
 
     [Fact]
     public void EnrichResponse_WhenCorrelationIdIsNull_DoesNotWriteHeader()
     {
         var httpContext = new DefaultHttpContext();
-        var ctx = MakeAppContext();
+        var ctx = MakeAppCallContext();
 
         _enricher.EnrichResponse(httpContext, ctx);
 
-        Assert.False(httpContext.Response.Headers.ContainsKey("X-Correlation-Id"));
+        Assert.False(httpContext.Response.Headers.ContainsKey(Constants.Headers.CorrelationId));
     }
 
     [Fact]
     public void EnrichResponse_WhenCorrelationIdIsWhitespace_DoesNotWriteHeader()
     {
         var httpContext = new DefaultHttpContext();
-        var ctx = MakeAppContext();
+        var ctx = MakeAppCallContext();
         ctx.CorrelationId = "  ";
 
         _enricher.EnrichResponse(httpContext, ctx);
 
-        Assert.False(httpContext.Response.Headers.ContainsKey("X-Correlation-Id"));
+        Assert.False(httpContext.Response.Headers.ContainsKey(Constants.Headers.CorrelationId));
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AppContext MakeAppContext(string? correlationId = null)
+    private static AppCallContext MakeAppCallContext(string? correlationId = null)
     {
-        var ctx = AppContext.Create("app", "req-1", "trace-1", "GET", "/");
+        var ctx = AppCallContext.Create("app", "req-1", "trace-1", "GET", "/");
         ctx.CorrelationId = correlationId;
         return ctx;
     }

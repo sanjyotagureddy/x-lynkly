@@ -4,11 +4,11 @@ namespace Lynkly.Shared.Kernel.Context;
 /// Captures ambient per-request metadata that can be propagated across the application pipeline.
 /// Intentionally free of ASP.NET Core dependencies so it remains NuGet-extractable.
 /// </summary>
-public sealed class AppContext
+public sealed class AppCallContext
 {
     private readonly Dictionary<string, string> _items = new(StringComparer.OrdinalIgnoreCase);
 
-    private AppContext(
+    private AppCallContext(
         string applicationName,
         string requestId,
         string traceId,
@@ -70,7 +70,7 @@ public sealed class AppContext
     public IReadOnlyDictionary<string, string> Items => _items;
 
     /// <summary>
-    /// Creates a new <see cref="AppContext"/> from the supplied request metadata.
+    /// Creates a new <see cref="AppCallContext"/> from the supplied request metadata.
     /// All BCL primitives — no transport framework dependency.
     /// </summary>
     /// <param name="applicationName">The logical application name; must not be <see langword="null"/> or whitespace.</param>
@@ -83,11 +83,11 @@ public sealed class AppContext
     /// <param name="userName">Optional display name of the authenticated user.</param>
     /// <param name="clientIp">Optional remote IP address of the client.</param>
     /// <param name="userAgent">Optional <c>User-Agent</c> string.</param>
-    /// <returns>A fully initialised <see cref="AppContext"/> instance.</returns>
+    /// <returns>A fully initialised <see cref="AppCallContext"/> instance.</returns>
     /// <exception cref="ArgumentException">
     /// Thrown when any of the required parameters is <see langword="null"/> or whitespace.
     /// </exception>
-    public static AppContext Create(
+    public static AppCallContext Create(
         string applicationName,
         string requestId,
         string traceId,
@@ -124,7 +124,7 @@ public sealed class AppContext
             throw new ArgumentException("Request path is required.", nameof(path));
         }
 
-        return new AppContext(
+        return new AppCallContext(
             applicationName,
             requestId,
             traceId,

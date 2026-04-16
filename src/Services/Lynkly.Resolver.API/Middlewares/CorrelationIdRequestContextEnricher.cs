@@ -1,40 +1,38 @@
 using Lynkly.Shared.Kernel.Context;
-using AppContext = Lynkly.Shared.Kernel.Context.AppContext;
+using Lynkly.Shared.Kernel.Core;
 
 namespace Lynkly.Resolver.API.Middlewares;
 
 internal sealed class CorrelationIdRequestContextEnricher : IRequestContextEnricher
 {
-    private const string CorrelationIdHeaderName = "X-Correlation-Id";
-
-    public void EnrichRequest(HttpContext httpContext, AppContext appContext)
+    public void EnrichRequest(HttpContext httpContext, AppCallContext appCallContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
-        ArgumentNullException.ThrowIfNull(appContext);
+        ArgumentNullException.ThrowIfNull(appCallContext);
 
-        if (!string.IsNullOrWhiteSpace(appContext.CorrelationId))
+        if (!string.IsNullOrWhiteSpace(appCallContext.CorrelationId))
         {
             return;
         }
 
-        if (httpContext.Request.Headers.TryGetValue(CorrelationIdHeaderName, out var correlationHeader)
+        if (httpContext.Request.Headers.TryGetValue(Constants.Headers.CorrelationId, out var correlationHeader)
             && !string.IsNullOrWhiteSpace(correlationHeader.ToString()))
         {
-            appContext.CorrelationId = correlationHeader.ToString();
+            appCallContext.CorrelationId = correlationHeader.ToString();
             return;
         }
 
-        appContext.CorrelationId = Guid.NewGuid().ToString("N");
+        appCallContext.CorrelationId = Guid.NewGuid().ToString("N");
     }
 
-    public void EnrichResponse(HttpContext httpContext, AppContext appContext)
+    public void EnrichResponse(HttpContext httpContext, AppCallContext appCallContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
-        ArgumentNullException.ThrowIfNull(appContext);
+        ArgumentNullException.ThrowIfNull(appCallContext);
 
-        if (!string.IsNullOrWhiteSpace(appContext.CorrelationId))
+        if (!string.IsNullOrWhiteSpace(appCallContext.CorrelationId))
         {
-            httpContext.Response.Headers[CorrelationIdHeaderName] = appContext.CorrelationId;
+            httpContext.Response.Headers[Constants.Headers.CorrelationId] = appCallContext.CorrelationId;
         }
     }
 }

@@ -18,6 +18,7 @@
     <ProjectReference Include="..\..\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Lynkly.Resolver.Infrastructure\Lynkly.Resolver.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Context\Lynkly.Shared.Kernel.Context.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Core\Lynkly.Shared.Kernel.Core.csproj" />
   </ItemGroup>
 
 </Project>

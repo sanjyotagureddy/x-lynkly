@@ -1,10 +1,11 @@
 using Lynkly.Resolver.API.Middlewares;
 using Lynkly.Shared.Kernel.Context;
+using Lynkly.Shared.Kernel.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
-using AppContext = Lynkly.Shared.Kernel.Context.AppContext;
 
 namespace Lynkly.Resolver.UnitTests.SharedKernel.Context;
 
@@ -33,7 +34,7 @@ public sealed class RequestContextMiddlewareTests
             return Task.CompletedTask;
         });
 
-        await middleware.InvokeAsync(new DefaultHttpContext());
+        await middleware.InvokeAsync(MakeHttpContext());
 
         Assert.True(nextCalled);
     }
@@ -44,14 +45,14 @@ public sealed class RequestContextMiddlewareTests
     public async Task InvokeAsync_CallsEnricher_EnrichRequest()
     {
         var enricher = Substitute.For<IRequestContextEnricher>();
-        var httpContext = new DefaultHttpContext();
-        var middleware = BuildMiddleware(enrichers: new[] { enricher });
+        var httpContext = MakeHttpContext(enrichers: new[] { enricher });
+        var middleware = BuildMiddleware();
 
         await middleware.InvokeAsync(httpContext);
 
         enricher.Received(1).EnrichRequest(
             Arg.Is(httpContext),
-            Arg.Any<AppContext>());
+            Arg.Any<AppCallContext>());
     }
 
     // ── InvokeAsync: response enricher invocation ────────────────────────────
@@ -63,12 +64,11 @@ public sealed class RequestContextMiddlewareTests
 
         // DefaultHttpContext does not fire OnStarting callbacks via StartAsync, so
         // we swap in a custom IHttpResponseFeature that lets us fire them on demand.
-        var httpContext = new DefaultHttpContext();
         var trackingFeature = new TrackingHttpResponseFeature();
+        var httpContext = MakeHttpContext(enrichers: new[] { enricher });
         httpContext.Features.Set<IHttpResponseFeature>(trackingFeature);
 
         var middleware = BuildMiddleware(
-            enrichers: new[] { enricher },
             next: async _ =>
             {
                 await trackingFeature.FireOnStartingAsync();
@@ -78,7 +78,7 @@ public sealed class RequestContextMiddlewareTests
 
         enricher.Received(1).EnrichResponse(
             Arg.Any<HttpContext>(),
-            Arg.Any<AppContext>());
+            Arg.Any<AppCallContext>());
     }
 
     // ── InvokeAsync: ambient scope ───────────────────────────────────────────
@@ -86,7 +86,7 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_SetsRequestContextScope_DuringPipeline()
     {
-        AppContext? capturedDuring = null;
+        AppCallContext? capturedDuring = null;
 
         var middleware = BuildMiddleware(next: _ =>
         {
@@ -96,7 +96,7 @@ public sealed class RequestContextMiddlewareTests
 
         Assert.Null(RequestContextScope.Current);
 
-        await middleware.InvokeAsync(new DefaultHttpContext());
+        await middleware.InvokeAsync(MakeHttpContext());
 
         Assert.NotNull(capturedDuring);
     }
@@ -106,18 +106,18 @@ public sealed class RequestContextMiddlewareTests
     {
         var middleware = BuildMiddleware();
 
-        await middleware.InvokeAsync(new DefaultHttpContext());
+        await middleware.InvokeAsync(MakeHttpContext());
 
         Assert.Null(RequestContextScope.Current);
     }
 
-    // ── InvokeAsync: AppContext population ───────────────────────────────────
+    // ── InvokeAsync: AppCallContext population ───────────────────────────────
 
     [Fact]
     public async Task InvokeAsync_PopulatesMethod_FromRequest()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
+        AppCallContext? captured = null;
+        var httpContext = MakeHttpContext();
         httpContext.Request.Method = "DELETE";
 
         var middleware = BuildMiddleware(next: _ =>
@@ -134,8 +134,8 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_PopulatesPath_FromRequest()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
+        AppCallContext? captured = null;
+        var httpContext = MakeHttpContext();
         httpContext.Request.Path = "/api/test";
 
         var middleware = BuildMiddleware(next: _ =>
@@ -152,9 +152,9 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_PopulatesCorrelationId_WhenHeaderPresent()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
-        httpContext.Request.Headers["X-Correlation-Id"] = "corr-from-header";
+        AppCallContext? captured = null;
+        var httpContext = MakeHttpContext();
+        httpContext.Request.Headers[Constants.Headers.CorrelationId] = "corr-from-header";
 
         var middleware = BuildMiddleware(next: _ =>
         {
@@ -170,17 +170,16 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_CorrelationIdIsNull_WhenHeaderAbsent()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
+        AppCallContext? captured = null;
 
-        // No enrichers registered, so CorrelationId stays as-built from BuildAppContext
-        var middleware = BuildMiddleware(
-            enrichers: Enumerable.Empty<IRequestContextEnricher>(),
-            next: _ =>
-            {
-                captured = RequestContextScope.Current;
-                return Task.CompletedTask;
-            });
+        // No enrichers registered, so CorrelationId stays as-built from BuildAppCallContext.
+        var httpContext = MakeHttpContext();
+
+        var middleware = BuildMiddleware(next: _ =>
+        {
+            captured = RequestContextScope.Current;
+            return Task.CompletedTask;
+        });
 
         await middleware.InvokeAsync(httpContext);
 
@@ -190,8 +189,8 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_UsesGet_WhenRequestMethodIsEmpty()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
+        AppCallContext? captured = null;
+        var httpContext = MakeHttpContext();
         httpContext.Request.Method = string.Empty;
 
         var middleware = BuildMiddleware(next: _ =>
@@ -208,8 +207,8 @@ public sealed class RequestContextMiddlewareTests
     [Fact]
     public async Task InvokeAsync_UsesRootPath_WhenRequestPathIsEmpty()
     {
-        AppContext? captured = null;
-        var httpContext = new DefaultHttpContext();
+        AppCallContext? captured = null;
+        var httpContext = MakeHttpContext();
         httpContext.Request.Path = PathString.Empty;
 
         var middleware = BuildMiddleware(next: _ =>
@@ -227,7 +226,6 @@ public sealed class RequestContextMiddlewareTests
 
     private static RequestContextMiddleware BuildMiddleware(
         Func<HttpContext, Task>? next = null,
-        IEnumerable<IRequestContextEnricher>? enrichers = null,
         string applicationName = "TestApp")
     {
         var env = Substitute.For<IHostEnvironment>();
@@ -237,10 +235,26 @@ public sealed class RequestContextMiddlewareTests
             ? ctx => next(ctx)
             : _ => Task.CompletedTask;
 
-        return new RequestContextMiddleware(
-            nextDelegate,
-            env,
-            enrichers ?? new[] { new CorrelationIdRequestContextEnricher() });
+        return new RequestContextMiddleware(nextDelegate, env);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="DefaultHttpContext"/> whose <c>RequestServices</c> is pre-populated
+    /// with the given enrichers (defaults to empty, meaning no enrichers are registered).
+    /// </summary>
+    private static DefaultHttpContext MakeHttpContext(
+        IEnumerable<IRequestContextEnricher>? enrichers = null)
+    {
+        var services = new ServiceCollection();
+        foreach (var enricher in enrichers ?? Enumerable.Empty<IRequestContextEnricher>())
+        {
+            services.AddSingleton<IRequestContextEnricher>(enricher);
+        }
+
+        return new DefaultHttpContext
+        {
+            RequestServices = services.BuildServiceProvider()
+        };
     }
 
     /// <summary>

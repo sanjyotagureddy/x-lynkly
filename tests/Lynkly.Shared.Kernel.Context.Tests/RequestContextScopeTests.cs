@@ -98,7 +98,7 @@ public sealed class RequestContextScopeTests
     public async Task BeginScope_DoesNotLeakAcrossParallelBranches()
     {
         var ctx = MakeContext();
-        AppContext? capturedInTask = null;
+        AppCallContext? capturedInTask = null;
 
         using (RequestContextScope.BeginScope(ctx))
         {
@@ -122,6 +122,6 @@ public sealed class RequestContextScopeTests
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static AppContext MakeContext(string name = "app") =>
-        AppContext.Create(name, "req-1", "trace-1", "GET", "/");
+    private static AppCallContext MakeContext(string name = "app") =>
+        AppCallContext.Create(name, "req-1", "trace-1", "GET", "/");
 }

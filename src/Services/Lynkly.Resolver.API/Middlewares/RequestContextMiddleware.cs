@@ -1,34 +1,40 @@
 using System.Diagnostics;
 using System.Security.Claims;
 using Lynkly.Shared.Kernel.Context;
+using Lynkly.Shared.Kernel.Core;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using AppContext = Lynkly.Shared.Kernel.Context.AppContext;
 
 namespace Lynkly.Resolver.API.Middlewares;
 
 internal sealed class RequestContextMiddleware(
     RequestDelegate next,
-    IHostEnvironment environment,
-    IEnumerable<IRequestContextEnricher> enrichers)
+    IHostEnvironment environment)
 {
     public async Task InvokeAsync(HttpContext httpContext)
     {
         ArgumentNullException.ThrowIfNull(httpContext);
 
-        var appContext = BuildAppContext(httpContext, environment.ApplicationName);
+        // Resolve enrichers per-request so scoped/transient enrichers are supported
+        // and ValidateScopes does not fail at startup.
+        var enrichers = httpContext.RequestServices
+            .GetServices<IRequestContextEnricher>()
+            .ToArray();
+
+        var appCallContext = BuildAppCallContext(httpContext, environment.ApplicationName);
 
         foreach (var enricher in enrichers)
         {
-            enricher.EnrichRequest(httpContext, appContext);
+            enricher.EnrichRequest(httpContext, appCallContext);
         }
 
-        using (RequestContextScope.BeginScope(appContext))
+        using (RequestContextScope.BeginScope(appCallContext))
         {
             httpContext.Response.OnStarting(() =>
             {
                 foreach (var enricher in enrichers)
                 {
-                    enricher.EnrichResponse(httpContext, appContext);
+                    enricher.EnrichResponse(httpContext, appCallContext);
                 }
 
                 return Task.CompletedTask;
@@ -38,11 +44,11 @@ internal sealed class RequestContextMiddleware(
         }
     }
 
-    private static AppContext BuildAppContext(HttpContext httpContext, string applicationName)
+    private static AppCallContext BuildAppCallContext(HttpContext httpContext, string applicationName)
     {
         var request = httpContext.Request;
 
-        var correlationId = request.Headers.TryGetValue("X-Correlation-Id", out var correlationValue)
+        var correlationId = request.Headers.TryGetValue(Constants.Headers.CorrelationId, out var correlationValue)
                             && !string.IsNullOrWhiteSpace(correlationValue.ToString())
             ? correlationValue.ToString()
             : null;
@@ -55,7 +61,7 @@ internal sealed class RequestContextMiddleware(
         var clientIp = httpContext.Connection.RemoteIpAddress?.ToString();
         var userAgent = request.Headers.UserAgent.ToString();
 
-        return AppContext.Create(
+        return AppCallContext.Create(
             applicationName,
             httpContext.TraceIdentifier,
             traceId,
