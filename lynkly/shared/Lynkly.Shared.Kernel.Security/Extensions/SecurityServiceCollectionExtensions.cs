@@ -1,5 +1,7 @@
 using Lynkly.Shared.Kernel.Security.Authentication;
 using Lynkly.Shared.Kernel.Security.Authorization;
+using Lynkly.Shared.Kernel.Security.Encryption;
+using Lynkly.Shared.Kernel.Security.Encryption.Impl;
 using Lynkly.Shared.Kernel.Security.Token;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,8 @@ public static class SecurityServiceCollectionExtensions
         services.TryAddSingleton<ISecurityService, NoOpSecurityService>();
         services.TryAddSingleton<ITokenService, NoOpTokenService>();
         services.TryAddSingleton<IUserContext, NoOpUserContext>();
+        services.TryAddSingleton<EncryptionKeyManager>();
+        services.TryAddSingleton<IEncryptionService, AesEncryptionService>();
 
         return services;
     }

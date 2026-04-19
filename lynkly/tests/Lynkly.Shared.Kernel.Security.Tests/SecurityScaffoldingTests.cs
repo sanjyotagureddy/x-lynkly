@@ -1,6 +1,7 @@
 using Lynkly.Shared.Kernel.Security.Authentication;
 using Lynkly.Shared.Kernel.Security.Authorization;
 using Lynkly.Shared.Kernel.Security.Configuration;
+using Lynkly.Shared.Kernel.Security.Encryption;
 using Lynkly.Shared.Kernel.Security.Extensions;
 using Lynkly.Shared.Kernel.Security.Token;
 using Microsoft.Extensions.Configuration;
@@ -40,6 +41,7 @@ public class SecurityScaffoldingTests
         Assert.NotNull(provider.GetService<ISecurityService>());
         Assert.NotNull(provider.GetService<ITokenService>());
         Assert.NotNull(provider.GetService<IUserContext>());
+        Assert.NotNull(provider.GetService<IEncryptionService>());
     }
 
     [Fact]
@@ -50,10 +52,12 @@ public class SecurityScaffoldingTests
         var securityService = new TestSecurityService();
         var tokenService = new TestTokenService();
         var userContext = new TestUserContext();
+        var encryptionService = new TestEncryptionService();
 
         services.AddSingleton<ISecurityService>(securityService);
         services.AddSingleton<ITokenService>(tokenService);
         services.AddSingleton<IUserContext>(userContext);
+        services.AddSingleton<IEncryptionService>(encryptionService);
 
         services.AddSecurity(configuration);
 
@@ -61,6 +65,7 @@ public class SecurityScaffoldingTests
         Assert.Same(securityService, provider.GetRequiredService<ISecurityService>());
         Assert.Same(tokenService, provider.GetRequiredService<ITokenService>());
         Assert.Same(userContext, provider.GetRequiredService<IUserContext>());
+        Assert.Same(encryptionService, provider.GetRequiredService<IEncryptionService>());
     }
 
     [Fact]
@@ -133,5 +138,14 @@ public class SecurityScaffoldingTests
         public string? UserId => "user-1";
         public string? UserName => "test-user";
         public IReadOnlyCollection<string> Roles => new[] { "admin" };
+    }
+
+    private sealed class TestEncryptionService : IEncryptionService
+    {
+        public byte[] Encrypt(string input) => [];
+        public byte[] Encrypt(byte[] input) => [];
+        public byte[] Encrypt(string input, string tenantId) => [];
+        public byte[] Encrypt(byte[] input, string tenantId) => [];
+        public byte[] Decrypt(byte[] encryptedData) => [];
     }
 }
