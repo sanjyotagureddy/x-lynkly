@@ -1,5 +1,6 @@
 using System.Reflection;
 
+using Lynkly.Shared.Kernel.Core.Exceptions;
 using Lynkly.Shared.Kernel.Core.Helpers;
 using Lynkly.Shared.Kernel.Core.Helpers.Reflection;
 using Lynkly.Shared.Kernel.Core.Helpers.Threading;
@@ -62,7 +63,7 @@ public sealed class TaskAndReflectionHelpersTests
             cts.Token));
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => TaskHelper.WithTimeoutAsync<int>(null!, TimeSpan.FromSeconds(1)));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => TaskHelper.WithTimeoutAsync(Task.FromResult(1), TimeSpan.Zero));
+        await Assert.ThrowsAsync<SharedKernelException>(() => TaskHelper.WithTimeoutAsync(Task.FromResult(1), TimeSpan.Zero));
     }
 
     [Fact]
@@ -83,7 +84,7 @@ public sealed class TaskAndReflectionHelpersTests
         Assert.Contains(3, result);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => TaskHelper.RunSafelyInParallelAsync<int>(null!, 1));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => TaskHelper.RunSafelyInParallelAsync(factories, 0));
+        await Assert.ThrowsAsync<SharedKernelException>(() => TaskHelper.RunSafelyInParallelAsync(factories, 0));
 
         var invalidFactories = new Func<CancellationToken, Task<int>>[] { null! };
         await Assert.ThrowsAsync<ArgumentNullException>(() => TaskHelper.RunSafelyInParallelAsync(invalidFactories, 1));
@@ -109,8 +110,8 @@ public sealed class TaskAndReflectionHelpersTests
         Assert.Equal("lynkly", ReflectionHelper.GetPropertyValue<string>(sample, "Name"));
         Assert.Equal("hidden", ReflectionHelper.GetPropertyValue<string>(sample, "Secret"));
         Assert.Null(ReflectionHelper.GetPropertyValue<string>(sample, "Optional"));
-        Assert.Throws<InvalidOperationException>(() => ReflectionHelper.GetPropertyValue<string>(sample, "Missing"));
-        Assert.Throws<InvalidCastException>(() => ReflectionHelper.GetPropertyValue<int>(sample, "Name"));
+        Assert.Throws<SharedKernelException>(() => ReflectionHelper.GetPropertyValue<string>(sample, "Missing"));
+        Assert.Throws<SharedKernelException>(() => ReflectionHelper.GetPropertyValue<int>(sample, "Name"));
         Assert.Throws<ArgumentNullException>(() => ReflectionHelper.GetPropertyValue<string>(null!, "Name"));
         Assert.Throws<ArgumentException>(() => ReflectionHelper.GetPropertyValue<string>(sample, " "));
 

@@ -1,5 +1,6 @@
 using System.Text;
 
+using Lynkly.Shared.Kernel.Core.Exceptions;
 using Lynkly.Shared.Kernel.Core.Helpers;
 using Lynkly.Shared.Kernel.Core.Helpers.Conversion;
 using Lynkly.Shared.Kernel.Core.Helpers.Core;
@@ -67,7 +68,48 @@ public sealed class CoreHelpersTests
     public void StringExtensions_Truncate_Should_ValidateArguments()
     {
         Assert.Throws<ArgumentNullException>(() => StringExtensions.Truncate(null!, 1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => "abc".Truncate(-1));
+        Assert.Throws<SharedKernelException>(() => "abc".Truncate(-1));
+    }
+
+    [Fact]
+    public void StringExtensions_ToNullIfWhiteSpace_Should_HandleNullAndNonEmpty()
+    {
+        Assert.Null(((string?)null).ToNullIfWhiteSpace());
+        Assert.Null("  ".ToNullIfWhiteSpace());
+        Assert.Equal("value", "value".ToNullIfWhiteSpace());
+    }
+
+    [Fact]
+    public void StringExtensions_Truncate_Should_HandleBoundaryLengths()
+    {
+        Assert.Equal("abc", "abc".Truncate(3));
+        Assert.Equal("ab", "abc".Truncate(2));
+        Assert.Equal(string.Empty, "abc".Truncate(0));
+        Assert.Equal("abc", "abc".Truncate(10));
+    }
+
+    [Fact]
+    public void StringExtensions_EqualsOrdinalIgnoreCase_Should_HandleNullAndMismatch()
+    {
+        Assert.True(((string?)null).EqualsOrdinalIgnoreCase(null));
+        Assert.False(((string?)null).EqualsOrdinalIgnoreCase("x"));
+        Assert.False("x".EqualsOrdinalIgnoreCase(null));
+        Assert.False("a".EqualsOrdinalIgnoreCase("b"));
+        Assert.True("ABC".EqualsOrdinalIgnoreCase("abc"));
+    }
+
+    [Fact]
+    public void EnumExtensions_Should_HandleUndefinedAndCaseSensitiveParsing()
+    {
+        var undefined = (SampleEnum)99;
+
+        Assert.False(undefined.IsDefinedValue());
+        Assert.Equal("99", undefined.GetName());
+
+        Assert.Equal(SampleEnum.Unknown, EnumExtensions.ParseOrDefault<SampleEnum>(null, SampleEnum.Unknown));
+        Assert.Equal(SampleEnum.Unknown, EnumExtensions.ParseOrDefault(string.Empty, SampleEnum.Unknown));
+        Assert.Equal(SampleEnum.Unknown, EnumExtensions.ParseOrDefault("ACTIVE", SampleEnum.Unknown, ignoreCase: false));
+        Assert.Equal(SampleEnum.Active, EnumExtensions.ParseOrDefault("Active", SampleEnum.Unknown, ignoreCase: false));
     }
 
     [Fact]

@@ -4,6 +4,7 @@ using Lynkly.Resolver.Domain.Links;
 using Lynkly.Resolver.Domain.Links.Events;
 using Lynkly.Shared.Kernel.Core.Domain;
 using Lynkly.Shared.Kernel.Core.Exceptions.UrlShortener;
+using Lynkly.Shared.Kernel.Core.Helpers.Security;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Security.Encryption;
@@ -48,7 +49,7 @@ public sealed class CreateShortUrlCommandHandler(
         var expiresAtUtc = request.ExpiresAtUtc ?? utcNow.Add(DefaultLinkLifetime);
 
         var tenantId = await _repository.GetOrCreateDefaultTenantIdAsync(cancellationToken);
-        var encryptedUrl = Convert.ToBase64String(_encryptionService.Encrypt(originalUrl, tenantId.ToString()));
+        var encryptedUrl = SecurityHelper.ToBase64(_encryptionService.Encrypt(originalUrl, tenantId.ToString()));
 
         var link = Link.Create(tenantId, encryptedUrl, expiresAtUtc);
         var alias = await ResolveAliasAsync(tenantId, originalUrl, request.Alias, cancellationToken);

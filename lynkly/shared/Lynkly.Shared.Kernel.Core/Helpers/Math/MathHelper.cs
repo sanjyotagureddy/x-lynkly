@@ -12,7 +12,7 @@ public static class MathHelper
     {
         if (minInclusive > maxInclusive)
         {
-            throw new ArgumentException("Minimum value cannot be greater than maximum value.", nameof(minInclusive));
+            throw SharedKernelException.InvalidArgument("Argument 'minInclusive' cannot be greater than 'maxInclusive'.");
         }
 
         return System.Math.Min(System.Math.Max(value, minInclusive), maxInclusive);
@@ -25,7 +25,7 @@ public static class MathHelper
     {
         if (total == 0)
         {
-            throw new DivideByZeroException("Total cannot be zero when calculating percentage.");
+            throw SharedKernelException.InvalidArgument("Argument 'total' cannot be zero when calculating percentage.");
         }
 
         return System.Math.Round((part / total) * 100m, decimals, MidpointRounding.AwayFromZero);

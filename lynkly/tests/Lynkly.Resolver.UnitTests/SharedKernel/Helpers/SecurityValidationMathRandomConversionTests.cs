@@ -1,3 +1,4 @@
+using Lynkly.Shared.Kernel.Core.Exceptions;
 using Lynkly.Shared.Kernel.Core.Helpers;
 using Lynkly.Shared.Kernel.Core.Helpers.Conversion;
 using Lynkly.Shared.Kernel.Core.Helpers.Math;
@@ -18,9 +19,11 @@ public sealed class SecurityValidationMathRandomConversionTests
     {
         var hash = SecurityHelper.ComputeSha256("abc");
         var base64 = SecurityHelper.ToBase64("lynkly");
+        var base64Bytes = SecurityHelper.ToBase64([1, 2, 3, 4]);
 
         Assert.Equal("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", hash);
         Assert.Equal("lynkly", SecurityHelper.FromBase64(base64));
+        Assert.Equal([1, 2, 3, 4], SecurityHelper.FromBase64ToBytes(base64Bytes));
         Assert.True(SecurityHelper.FixedTimeEquals("a", "a"));
         Assert.False(SecurityHelper.FixedTimeEquals("a", "b"));
         Assert.False(SecurityHelper.FixedTimeEquals("a", "aa"));
@@ -29,7 +32,9 @@ public sealed class SecurityValidationMathRandomConversionTests
 
         Assert.Throws<ArgumentNullException>(() => SecurityHelper.ComputeSha256(null!));
         Assert.Throws<ArgumentNullException>(() => SecurityHelper.ToBase64(null!));
+        Assert.Throws<ArgumentNullException>(() => SecurityHelper.ToBase64((byte[])null!));
         Assert.Throws<ArgumentNullException>(() => SecurityHelper.FromBase64(null!));
+        Assert.Throws<ArgumentNullException>(() => SecurityHelper.FromBase64ToBytes(null!));
     }
 
     [Fact]
@@ -39,9 +44,9 @@ public sealed class SecurityValidationMathRandomConversionTests
         Assert.Equal("x", ValidationHelper.AgainstNullOrWhiteSpace("x", "p"));
         Assert.Equal(2, ValidationHelper.AgainstOutOfRange(2, 1, 3, "p"));
 
-        Assert.Throws<ArgumentNullException>(() => ValidationHelper.AgainstNull<string>(null, "p"));
-        Assert.Throws<ArgumentException>(() => ValidationHelper.AgainstNullOrWhiteSpace(" ", "p"));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ValidationHelper.AgainstOutOfRange(4, 1, 3, "p"));
+        Assert.Throws<SharedKernelException>(() => ValidationHelper.AgainstNull<string>(null, "p"));
+        Assert.Throws<SharedKernelException>(() => ValidationHelper.AgainstNullOrWhiteSpace(" ", "p"));
+        Assert.Throws<SharedKernelException>(() => ValidationHelper.AgainstOutOfRange(4, 1, 3, "p"));
     }
 
     [Fact]
@@ -53,8 +58,8 @@ public sealed class SecurityValidationMathRandomConversionTests
         Assert.Equal(25m, MathHelper.Percentage(1m, 4m));
         Assert.Equal(1.23m, MathHelper.Round(1.234m, 2));
 
-        Assert.Throws<ArgumentException>(() => MathHelper.Clamp(1m, 2m, 1m));
-        Assert.Throws<DivideByZeroException>(() => MathHelper.Percentage(1m, 0m));
+        Assert.Throws<SharedKernelException>(() => MathHelper.Clamp(1m, 2m, 1m));
+        Assert.Throws<SharedKernelException>(() => MathHelper.Percentage(1m, 0m));
     }
 
     [Fact]
@@ -71,8 +76,8 @@ public sealed class SecurityValidationMathRandomConversionTests
         Assert.Equal(8, secureBytes.Length);
         Assert.InRange(secureValue, 1, 4);
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => RandomHelper.NextBytes(-1));
-        Assert.Throws<ArgumentOutOfRangeException>(() => RandomHelper.NextSecureBytes(-1));
+        Assert.Throws<SharedKernelException>(() => RandomHelper.NextBytes(-1));
+        Assert.Throws<SharedKernelException>(() => RandomHelper.NextSecureBytes(-1));
     }
 
     [Fact]

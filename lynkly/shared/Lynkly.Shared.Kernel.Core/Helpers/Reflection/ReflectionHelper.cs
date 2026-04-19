@@ -16,7 +16,7 @@ public static class ReflectionHelper
         ArgumentException.ThrowIfNullOrWhiteSpace(propertyName);
 
         var property = source.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-            ?? throw new InvalidOperationException($"Property '{propertyName}' was not found on type '{source.GetType().Name}'.");
+            ?? throw SharedKernelException.InvalidOperation($"Property '{propertyName}' was not found on type '{source.GetType().Name}'.");
 
         var value = property.GetValue(source);
 
@@ -27,7 +27,7 @@ public static class ReflectionHelper
 
         if (value is not T typedValue)
         {
-            throw new InvalidCastException($"Property '{propertyName}' is not of type '{typeof(T).Name}'.");
+            throw SharedKernelException.InvalidConversion($"Property '{propertyName}' is not of type '{typeof(T).Name}'.");
         }
 
         return typedValue;

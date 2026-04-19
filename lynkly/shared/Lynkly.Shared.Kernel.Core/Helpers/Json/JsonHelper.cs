@@ -56,7 +56,7 @@ public static class JsonHelper
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            throw new ArgumentException("JSON payload cannot be null, empty, or whitespace.", nameof(json));
+            throw SharedKernelException.InvalidArgument("Argument 'json' cannot be null, empty, or whitespace.");
         }
 
         var value = JsonConvert.DeserializeObject<T>(json, settings ?? DefaultSettings);

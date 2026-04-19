@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 
+using Lynkly.Shared.Kernel.Core.Exceptions;
 using Lynkly.Shared.Kernel.Core.Helpers;
 using Lynkly.Shared.Kernel.Core.Helpers.Networking;
 
@@ -72,10 +73,10 @@ public sealed class NetworkingAndRetryHelpersTests
         Assert.Equal(3, attempts);
 
         await Assert.ThrowsAsync<ArgumentNullException>(() => RetryHelper.ExecuteAsync<int>(null!));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => RetryHelper.ExecuteAsync<int>(
+        await Assert.ThrowsAsync<SharedKernelException>(() => RetryHelper.ExecuteAsync<int>(
             _ => Task.FromResult(1),
             new RetryPolicyOptions { RetryCount = -1 }));
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => RetryHelper.ExecuteAsync<int>(
+        await Assert.ThrowsAsync<SharedKernelException>(() => RetryHelper.ExecuteAsync<int>(
             _ => Task.FromResult(1),
             new RetryPolicyOptions { InitialDelay = TimeSpan.FromMilliseconds(-1) }));
 

@@ -1,3 +1,4 @@
+using Lynkly.Shared.Kernel.Core.Exceptions;
 using Lynkly.Shared.Kernel.Core.Helpers;
 using Lynkly.Shared.Kernel.Core.Helpers.Json;
 
@@ -37,7 +38,7 @@ public sealed class JsonHelperTests
     [Fact]
     public void JsonHelper_Deserialize_Should_ValidateInput()
     {
-        Assert.Throws<ArgumentException>(() => JsonHelper.Deserialize<Person>("  "));
+        Assert.Throws<SharedKernelException>(() => JsonHelper.Deserialize<Person>("  "));
         Assert.Throws<JsonSerializationException>(() => JsonHelper.Deserialize<Person>("null"));
     }
 

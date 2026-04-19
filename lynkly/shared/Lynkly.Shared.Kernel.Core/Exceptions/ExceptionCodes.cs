@@ -13,4 +13,11 @@ public static class ExceptionCodes
         public const string LinkExpired = "url_shortener.link.expired";
         public const string DomainBlocked = "url_shortener.domain.blocked";
     }
+
+    public static class SharedKernel
+    {
+        public const string InvalidArgument = "shared_kernel.invalid_argument";
+        public const string InvalidOperation = "shared_kernel.invalid_operation";
+        public const string InvalidConversion = "shared_kernel.invalid_conversion";
+    }
 }

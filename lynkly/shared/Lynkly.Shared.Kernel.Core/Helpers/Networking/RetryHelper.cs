@@ -83,12 +83,12 @@ public static class RetryHelper
 
         if (options.RetryCount < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(options.RetryCount), "Retry count cannot be negative.");
+            throw SharedKernelException.InvalidArgument("Argument 'RetryCount' cannot be negative.");
         }
 
         if (options.InitialDelay < TimeSpan.Zero)
         {
-            throw new ArgumentOutOfRangeException(nameof(options.InitialDelay), "Initial delay cannot be negative.");
+            throw SharedKernelException.InvalidArgument("Argument 'InitialDelay' cannot be negative.");
         }
 
         for (var attempt = 0; ; attempt++)

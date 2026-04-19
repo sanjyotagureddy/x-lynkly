@@ -45,4 +45,34 @@ public sealed class CollectionsHelpersTests
         Assert.Throws<ArgumentNullException>(() => CollectionExtensions.ForEach<int>(null!, _ => { }));
         Assert.Throws<ArgumentNullException>(() => new[] { 1 }.ForEach(null!));
     }
+
+    [Fact]
+    public void CollectionExtensions_IsNullOrEmpty_Should_HandleReadOnlyCollection()
+    {
+        IEnumerable<int> empty = new ReadOnlyCollectionOnly<int>([]);
+        IEnumerable<int> nonEmpty = new ReadOnlyCollectionOnly<int>([1, 2]);
+
+        Assert.True(empty.IsNullOrEmpty());
+        Assert.False(nonEmpty.IsNullOrEmpty());
+    }
+
+    [Fact]
+    public void CollectionExtensions_IsNullOrEmpty_Should_HandlePlainEnumerable()
+    {
+        IEnumerable<int> empty = Enumerable.Empty<int>();
+        IEnumerable<int> nonEmpty = Enumerable.Range(1, 2);
+
+        Assert.True(empty.IsNullOrEmpty());
+        Assert.False(nonEmpty.IsNullOrEmpty());
+    }
+
+    // Implements IReadOnlyCollection<T> but NOT ICollection<T>, to exercise that branch.
+    private sealed class ReadOnlyCollectionOnly<T>(T[] items) : IReadOnlyCollection<T>
+    {
+        public int Count => items.Length;
+
+        public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)items).GetEnumerator();
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => items.GetEnumerator();
+    }
 }

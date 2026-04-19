@@ -4,6 +4,7 @@ using Lynkly.Resolver.Application.Abstractions.Persistence;
 using Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 using Lynkly.Resolver.Domain.Links;
 using Lynkly.Shared.Kernel.Core.Exceptions.UrlShortener;
+using Lynkly.Shared.Kernel.Core.Helpers.Security;
 using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Security.Encryption;
 using NSubstitute;
@@ -48,7 +49,7 @@ public sealed class CreateShortUrlCommandHandlerTests
         Assert.NotNull(repository.StoredLink);
         Assert.NotEqual(originalUrl, repository.StoredLink!.DestinationUrl);
 
-        var decryptedBytes = encryptionService.Decrypt(Convert.FromBase64String(repository.StoredLink.DestinationUrl));
+        var decryptedBytes = encryptionService.Decrypt(SecurityHelper.FromBase64ToBytes(repository.StoredLink.DestinationUrl));
         Assert.Equal(originalUrl, Encoding.UTF8.GetString(decryptedBytes));
 
         await messagePublisher.Received(1).PublishAsync(

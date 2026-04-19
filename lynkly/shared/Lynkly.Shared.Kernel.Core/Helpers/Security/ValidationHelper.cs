@@ -12,7 +12,7 @@ public static class ValidationHelper
     {
         if (value is null)
         {
-            throw new ArgumentNullException(parameterName);
+            throw SharedKernelException.InvalidArgument($"Argument '{parameterName}' cannot be null.");
         }
 
         return value;
@@ -25,7 +25,7 @@ public static class ValidationHelper
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw new ArgumentException("Value cannot be null, empty, or whitespace.", parameterName);
+            throw SharedKernelException.InvalidArgument($"Argument '{parameterName}' cannot be null, empty, or whitespace.");
         }
 
         return value;
@@ -39,7 +39,7 @@ public static class ValidationHelper
     {
         if (value.CompareTo(minInclusive) < 0 || value.CompareTo(maxInclusive) > 0)
         {
-            throw new ArgumentOutOfRangeException(parameterName, $"Value must be between {minInclusive} and {maxInclusive}.");
+            throw SharedKernelException.InvalidArgument($"Argument '{parameterName}' must be between {minInclusive} and {maxInclusive}.");
         }
 
         return value;

@@ -30,12 +30,30 @@ public static class SecurityHelper
     }
 
     /// <summary>
+    /// Encodes bytes to Base64.
+    /// </summary>
+    public static string ToBase64(byte[] input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        return Convert.ToBase64String(input);
+    }
+
+    /// <summary>
     /// Decodes Base64 text.
     /// </summary>
     public static string FromBase64(string input, System.Text.Encoding? encoding = null)
     {
         ArgumentNullException.ThrowIfNull(input);
         return (encoding ?? System.Text.Encoding.UTF8).GetString(Convert.FromBase64String(input));
+    }
+
+    /// <summary>
+    /// Decodes Base64 text to bytes.
+    /// </summary>
+    public static byte[] FromBase64ToBytes(string input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        return Convert.FromBase64String(input);
     }
 
     /// <summary>
