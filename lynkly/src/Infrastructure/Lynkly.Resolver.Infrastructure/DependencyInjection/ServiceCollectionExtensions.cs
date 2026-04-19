@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Lynkly.Resolver.Infrastructure.DependencyInjection;
 
-public static class ServiceCollectionExtensions
+public static class ModuleRegistration
 {
     public static IServiceCollection AddResolverInfrastructure(this IServiceCollection services)
     {

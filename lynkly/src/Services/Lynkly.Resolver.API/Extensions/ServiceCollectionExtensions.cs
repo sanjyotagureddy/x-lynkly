@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Lynkly.Resolver.API.Extensions;
 
-public static class ServiceCollectionExtensions
+public static class ModuleRegistration
 {
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
