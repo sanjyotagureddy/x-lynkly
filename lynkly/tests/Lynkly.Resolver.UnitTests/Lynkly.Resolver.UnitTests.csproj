@@ -31,6 +31,7 @@
     <ProjectReference Include="..\..\src\Services\Lynkly.Resolver.API\Lynkly.Resolver.API.csproj" />
     <ProjectReference Include="..\..\shared\Lynkly.Shared.Kernel.Caching\Lynkly.Shared.Kernel.Caching.csproj" />
     <ProjectReference Include="..\..\shared\Lynkly.Shared.Kernel.Messaging\Lynkly.Shared.Kernel.Messaging.csproj" />
+    <ProjectReference Include="..\..\shared\Lynkly.Shared.Kernel.Security\Lynkly.Shared.Kernel.Security.csproj" />
   </ItemGroup>
 
 </Project>

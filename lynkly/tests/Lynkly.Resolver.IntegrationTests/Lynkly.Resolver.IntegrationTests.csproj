@@ -25,9 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Caching\Lynkly.Resolver.Infrastructure.Caching.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Messaging\Lynkly.Resolver.Infrastructure.Messaging.csproj" />
     <ProjectReference Include="..\..\src\Infrastructure\Lynkly.Resolver.Infrastructure.Persistence\Lynkly.Resolver.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Services\Lynkly.Resolver.API\Lynkly.Resolver.API.csproj" />
   </ItemGroup>
 
 </Project>
