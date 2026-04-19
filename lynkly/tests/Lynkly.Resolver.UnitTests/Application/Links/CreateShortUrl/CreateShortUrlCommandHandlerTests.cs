@@ -1,4 +1,5 @@
 using System.Text;
+using Lynkly.Resolver.Application.Abstractions;
 using Lynkly.Resolver.Application.Abstractions.Persistence;
 using Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 using Lynkly.Resolver.Domain.Links;
@@ -11,6 +12,22 @@ namespace Lynkly.Resolver.UnitTests.Application.Links.CreateShortUrl;
 
 public sealed class CreateShortUrlCommandHandlerTests
 {
+    private static CreateShortUrlCommandHandler BuildHandler(
+        InMemoryLinkWriteRepository? repository = null,
+        TestEncryptionService? encryption = null,
+        IShortAliasGenerator? aliasGenerator = null,
+        IBlockedDomainChecker? blockedDomainChecker = null,
+        TimeProvider? timeProvider = null)
+    {
+        return new CreateShortUrlCommandHandler(
+            repository ?? new InMemoryLinkWriteRepository(),
+            encryption ?? new TestEncryptionService(),
+            aliasGenerator ?? new TestShortAliasGenerator("generated-slug"),
+            Substitute.For<IMessagePublisher>(),
+            blockedDomainChecker ?? new AllowAllDomainChecker(),
+            timeProvider);
+    }
+
     [Fact]
     public async Task Handle_EncryptsAndPersistsDestinationUrl_AndPublishesMessage()
     {
@@ -18,7 +35,9 @@ public sealed class CreateShortUrlCommandHandlerTests
         var encryptionService = new TestEncryptionService();
         var aliasGenerator = new TestShortAliasGenerator("generated-slug");
         var messagePublisher = Substitute.For<IMessagePublisher>();
-        var handler = new CreateShortUrlCommandHandler(repository, encryptionService, aliasGenerator, messagePublisher);
+        var handler = new CreateShortUrlCommandHandler(
+            repository, encryptionService, aliasGenerator, messagePublisher,
+            new AllowAllDomainChecker());
 
         const string originalUrl = "https://example.com/some/long/path";
         var command = new CreateShortUrlCommand(originalUrl, "summer-sale", DateTimeOffset.UtcNow.AddDays(2));
@@ -51,7 +70,8 @@ public sealed class CreateShortUrlCommandHandlerTests
             repository,
             new TestEncryptionService(),
             aliasGenerator,
-            Substitute.For<IMessagePublisher>());
+            Substitute.For<IMessagePublisher>(),
+            new AllowAllDomainChecker());
 
         var command = new CreateShortUrlCommand("https://example.com/landing", null, null);
 
@@ -84,12 +104,69 @@ public sealed class CreateShortUrlCommandHandlerTests
             repository,
             new TestEncryptionService(),
             new TestShortAliasGenerator("unused"),
-            Substitute.For<IMessagePublisher>());
+            Substitute.For<IMessagePublisher>(),
+            new AllowAllDomainChecker());
 
         var command = new CreateShortUrlCommand("https://example.com", "existing", null);
 
         await Assert.ThrowsAsync<AliasAlreadyExistsException>(() => handler.Handle(command, CancellationToken.None));
     }
+
+    [Fact]
+    public async Task Handle_ThrowsBlockedDomain_WhenUrlDomainIsBlocked()
+    {
+        var handler = BuildHandler(blockedDomainChecker: new BlockListDomainChecker("blocked.com"));
+
+        var command = new CreateShortUrlCommand("https://blocked.com/some/path", null, null);
+
+        await Assert.ThrowsAsync<BlockedDomainException>(() => handler.Handle(command, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Handle_Succeeds_WhenUrlDomainIsNotBlocked()
+    {
+        var handler = BuildHandler(blockedDomainChecker: new BlockListDomainChecker("other.com"));
+
+        var command = new CreateShortUrlCommand("https://allowed.com/path", null, null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.NotNull(result.Alias);
+    }
+
+    [Fact]
+    public async Task Handle_DefaultsExpiryToOneMonth_WhenNotProvided()
+    {
+        var fixedNow = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var fakeTime = new FakeTimeProvider(fixedNow);
+        var repository = new InMemoryLinkWriteRepository();
+        var handler = BuildHandler(repository: repository, timeProvider: fakeTime);
+
+        var command = new CreateShortUrlCommand("https://example.com/path", null, null);
+        await handler.Handle(command, CancellationToken.None);
+
+        Assert.NotNull(repository.StoredLink);
+        Assert.NotNull(repository.StoredLink!.ExpiresAtUtc);
+        Assert.Equal(fixedNow.AddDays(30), repository.StoredLink.ExpiresAtUtc!.Value);
+    }
+
+    [Fact]
+    public async Task Handle_UsesProvidedExpiry_WhenExplicitlySet()
+    {
+        var fixedNow = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var fakeTime = new FakeTimeProvider(fixedNow);
+        var repository = new InMemoryLinkWriteRepository();
+        var handler = BuildHandler(repository: repository, timeProvider: fakeTime);
+
+        var explicitExpiry = fixedNow.AddDays(7);
+        var command = new CreateShortUrlCommand("https://example.com/path", null, explicitExpiry);
+        await handler.Handle(command, CancellationToken.None);
+
+        Assert.NotNull(repository.StoredLink);
+        Assert.Equal(explicitExpiry, repository.StoredLink!.ExpiresAtUtc!.Value);
+    }
+
+    // ---- test doubles ----
 
     private sealed class InMemoryLinkWriteRepository : ILinkWriteRepository
     {
@@ -168,5 +245,22 @@ public sealed class CreateShortUrlCommandHandlerTests
 
             return _aliases[^1];
         }
+    }
+
+    private sealed class AllowAllDomainChecker : IBlockedDomainChecker
+    {
+        public bool IsBlocked(string host) => false;
+    }
+
+    private sealed class BlockListDomainChecker(params string[] blocked) : IBlockedDomainChecker
+    {
+        private readonly HashSet<string> _blocked = new(blocked, StringComparer.OrdinalIgnoreCase);
+
+        public bool IsBlocked(string host) => _blocked.Contains(host);
+    }
+
+    private sealed class FakeTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
     }
 }

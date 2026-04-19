@@ -11,5 +11,6 @@ public static class ExceptionCodes
         public const string AliasAlreadyExists = "url_shortener.alias.already_exists";
         public const string InvalidDestinationUrl = "url_shortener.destination.invalid";
         public const string LinkExpired = "url_shortener.link.expired";
+        public const string DomainBlocked = "url_shortener.domain.blocked";
     }
 }

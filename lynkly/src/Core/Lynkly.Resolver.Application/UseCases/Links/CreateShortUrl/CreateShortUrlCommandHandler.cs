@@ -1,3 +1,4 @@
+using Lynkly.Resolver.Application.Abstractions;
 using Lynkly.Resolver.Application.Abstractions.Persistence;
 using Lynkly.Resolver.Domain.Links;
 using Lynkly.Resolver.Domain.Links.Events;
@@ -13,14 +14,19 @@ public sealed class CreateShortUrlCommandHandler(
     ILinkWriteRepository repository,
     IEncryptionService encryptionService,
     IShortAliasGenerator shortAliasGenerator,
-    IMessagePublisher messagePublisher) : IRequestHandler<CreateShortUrlCommand, CreateShortUrlResult>
+    IMessagePublisher messagePublisher,
+    IBlockedDomainChecker blockedDomainChecker,
+    TimeProvider? timeProvider = null) : IRequestHandler<CreateShortUrlCommand, CreateShortUrlResult>
 {
     private const int MaxAliasGenerationAttempts = 5;
+    private static readonly TimeSpan DefaultLinkLifetime = TimeSpan.FromDays(30);
 
     private readonly ILinkWriteRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     private readonly IEncryptionService _encryptionService = encryptionService ?? throw new ArgumentNullException(nameof(encryptionService));
     private readonly IShortAliasGenerator _shortAliasGenerator = shortAliasGenerator ?? throw new ArgumentNullException(nameof(shortAliasGenerator));
     private readonly IMessagePublisher _messagePublisher = messagePublisher ?? throw new ArgumentNullException(nameof(messagePublisher));
+    private readonly IBlockedDomainChecker _blockedDomainChecker = blockedDomainChecker ?? throw new ArgumentNullException(nameof(blockedDomainChecker));
+    private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     public async Task<CreateShortUrlResult> Handle(CreateShortUrlCommand request, CancellationToken cancellationToken)
     {
@@ -33,10 +39,18 @@ public sealed class CreateShortUrlCommandHandler(
             throw new InvalidDestinationUrlException(originalUrl);
         }
 
+        if (_blockedDomainChecker.IsBlocked(destinationUri.Host))
+        {
+            throw new BlockedDomainException(destinationUri.Host);
+        }
+
+        var utcNow = _timeProvider.GetUtcNow();
+        var expiresAtUtc = request.ExpiresAtUtc ?? utcNow.Add(DefaultLinkLifetime);
+
         var tenantId = await _repository.GetOrCreateDefaultTenantIdAsync(cancellationToken);
         var encryptedUrl = Convert.ToBase64String(_encryptionService.Encrypt(originalUrl, tenantId.ToString()));
 
-        var link = Link.Create(tenantId, encryptedUrl, request.ExpiresAtUtc);
+        var link = Link.Create(tenantId, encryptedUrl, expiresAtUtc);
         var alias = await ResolveAliasAsync(tenantId, originalUrl, request.Alias, cancellationToken);
         var linkAlias = LinkAlias.Create(tenantId, link.Id, alias, isPrimary: true);
 
