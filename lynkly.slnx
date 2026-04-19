@@ -12,6 +12,7 @@
     <Project Path="shared/Lynkly.Shared.Kernel.Caching/Lynkly.Shared.Kernel.Caching.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Core/Lynkly.Shared.Kernel.Core.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Logging/Lynkly.Shared.Kernel.Logging.csproj" />
+    <Project Path="shared/Lynkly.Shared.Kernel.MediatR/Lynkly.Shared.Kernel.MediatR.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Messaging/Lynkly.Shared.Kernel.Messaging.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Observability/Lynkly.Shared.Kernel.Observability.csproj" />
     <Project Path="shared/Lynkly.Shared.Kernel.Persistence/Lynkly.Shared.Kernel.Persistence.csproj" />
@@ -37,6 +38,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Lynkly.Resolver.IntegrationTests/Lynkly.Resolver.IntegrationTests.csproj" />
     <Project Path="tests/Lynkly.Resolver.UnitTests/Lynkly.Resolver.UnitTests.csproj" />
+    <Project Path="tests/Lynkly.Shared.Kernel.MediatR.Tests/Lynkly.Shared.Kernel.MediatR.Tests.csproj" />
     <Project Path="tests/Lynkly.Shared.Kernel.Observability.Tests/Lynkly.Shared.Kernel.Observability.Tests.csproj" />
     <Project Path="tests/Lynkly.Shared.Kernel.Security.Tests/Lynkly.Shared.Kernel.Security.Tests.csproj" />
   </Folder>
