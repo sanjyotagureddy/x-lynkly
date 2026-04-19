@@ -24,9 +24,9 @@ public static class ServiceCollectionExtensions
             Trace.TraceWarning("Redis cache is unavailable or not configured. Falling back to in-memory cache provider.");
         }
 
-        if (redisAvailable && !string.IsNullOrWhiteSpace(redisConnectionString))
+        if (redisAvailable)
         {
-            services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+            services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString!);
         }
 
         services.AddKernelCaching(options =>
@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
             var options = ConfigurationOptions.Parse(redisConnectionString);
             options.AbortOnConnectFail = true;
             options.ConnectRetry = 0;
-            options.ConnectTimeout = Math.Min(options.ConnectTimeout <= 0 ? 1000 : options.ConnectTimeout, 1000);
-            options.SyncTimeout = Math.Min(options.SyncTimeout <= 0 ? 1000 : options.SyncTimeout, 1000);
+            options.ConnectTimeout = 1000;
+            options.SyncTimeout = 1000;
 
             using var multiplexer = ConnectionMultiplexer.Connect(options);
             return multiplexer.IsConnected;
