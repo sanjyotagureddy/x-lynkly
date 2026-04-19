@@ -9,6 +9,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lynkly.Resolver.Domain\Lynkly.Resolver.Domain.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Core\Lynkly.Shared.Kernel.Core.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.MediatR\Lynkly.Shared.Kernel.MediatR.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Messaging\Lynkly.Shared.Kernel.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Security\Lynkly.Shared.Kernel.Security.csproj" />
   </ItemGroup>
 
 </Project>

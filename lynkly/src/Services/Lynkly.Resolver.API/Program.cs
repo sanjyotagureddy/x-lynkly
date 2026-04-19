@@ -15,6 +15,7 @@ app.UseSwaggerSupport();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapDiscoveredEndpoints();
 app.MapGet("/", () => Results.Ok("Lynkly Resolver API"));
 
 app.Run();

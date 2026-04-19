@@ -15,7 +15,7 @@ public static class ModuleRegistration
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        services.AddResolverPersistence();
+        services.AddResolverPersistence(configuration);
         services.AddResolverCaching();
         services.AddResolverMessaging(configuration);
 
