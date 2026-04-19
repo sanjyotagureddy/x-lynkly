@@ -19,6 +19,16 @@ public sealed class Sha256ShortAliasGeneratorTests
     }
 
     [Fact]
+    public void Generate_Should_Return_EightCharAlias()
+    {
+        var generator = new Sha256ShortAliasGenerator();
+
+        var alias = generator.Generate(TenantId, "https://example.com/path", 0);
+
+        Assert.Equal(8, alias.Length);
+    }
+
+    [Fact]
     public void Generate_Should_Change_WhenAttemptChanges()
     {
         var generator = new Sha256ShortAliasGenerator();

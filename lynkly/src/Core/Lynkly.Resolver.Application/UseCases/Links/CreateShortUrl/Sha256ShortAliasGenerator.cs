@@ -6,7 +6,7 @@ namespace Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 
 public sealed class Sha256ShortAliasGenerator : IShortAliasGenerator
 {
-    private const int AliasLength = 10;
+    private const int AliasLength = 8;
 
     public string Generate(TenantId tenantId, string originalUrl, int attempt)
     {
