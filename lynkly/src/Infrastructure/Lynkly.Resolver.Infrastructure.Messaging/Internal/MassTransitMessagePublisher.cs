@@ -6,10 +6,10 @@ namespace Lynkly.Resolver.Infrastructure.Messaging.Internal;
 
 internal sealed class MassTransitMessagePublisher(
     IPublishEndpoint publishEndpoint,
-    IStructuredLogger<MassTransitMessagePublisher>? logger = null) : IMessagePublisher
+    IStructuredLogger<MassTransitMessagePublisher> logger) : IMessagePublisher
 {
     private readonly IPublishEndpoint _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
-    private readonly IStructuredLogger<MassTransitMessagePublisher> _logger = logger ?? NoOpStructuredLogger<MassTransitMessagePublisher>.Instance;
+    private readonly IStructuredLogger<MassTransitMessagePublisher> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task PublishAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
         where TMessage : class
@@ -18,23 +18,24 @@ internal sealed class MassTransitMessagePublisher(
 
         var messageType = typeof(TMessage).Name;
         _logger.LogInformation(
-            "Publishing integration event to RabbitMQ MessageType {MessageType}",
+            "Publishing integration event MessageType {MessageType}",
             messageType);
 
         try
         {
             await _publishEndpoint.Publish(message, cancellationToken);
             _logger.LogInformation(
-                "Published integration event to RabbitMQ MessageType {MessageType}",
+                "Published integration event MessageType {MessageType}",
                 messageType);
         }
         catch (Exception exception)
         {
             _logger.LogError(
                 exception,
-                "Failed to publish integration event to RabbitMQ MessageType {MessageType}",
+                "Failed to publish integration event MessageType {MessageType}",
                 messageType);
             throw;
         }
     }
+
 }

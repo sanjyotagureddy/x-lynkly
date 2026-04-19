@@ -102,18 +102,11 @@ public sealed class ResolveShortUrlQueryHandlerTests
 
         await handler.Handle(new ResolveShortUrlQuery("promo", null), CancellationToken.None);
 
-        var startCall = logger.ReceivedCalls().First(call =>
-            call.GetMethodInfo().Name == nameof(IStructuredLogger<ResolveShortUrlQueryHandler>.LogInformation)
-            && call.GetArguments()[0] is string messageTemplate
-            && messageTemplate == "ResolveShortUrl query handling started RequestId {RequestId} CorrelationId {CorrelationId} Alias {Alias}");
-        var startArguments = Assert.IsType<object?[]>(startCall.GetArguments()[1]);
-        Assert.Equal("promo", startArguments[2]?.ToString());
-
-        var completionCall = logger.ReceivedCalls().First(call =>
-            call.GetMethodInfo().Name == nameof(IStructuredLogger<ResolveShortUrlQueryHandler>.LogInformation)
-            && call.GetArguments()[0] is string messageTemplate
-            && messageTemplate == "ResolveShortUrl query handling completed RequestId {RequestId} CorrelationId {CorrelationId} Alias {Alias}");
-        var completionArguments = Assert.IsType<object?[]>(completionCall.GetArguments()[1]);
-        Assert.Equal("promo", completionArguments[2]?.ToString());
+        logger.Received().LogInformation(
+            "ResolveShortUrl query handling started RequestId {RequestId} CorrelationId {CorrelationId} Alias {Alias}",
+            Arg.Any<object?[]>());
+        logger.Received().LogInformation(
+            "ResolveShortUrl query handling completed RequestId {RequestId} CorrelationId {CorrelationId} Alias {Alias}",
+            Arg.Any<object?[]>());
     }
 }

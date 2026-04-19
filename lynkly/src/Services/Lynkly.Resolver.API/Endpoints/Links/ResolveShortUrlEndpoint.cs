@@ -1,10 +1,8 @@
 using Lynkly.Resolver.Application.UseCases.Links.ResolveShortUrl;
-using Lynkly.Shared.Kernel.Core;
 using Lynkly.Shared.Kernel.Core.Web;
 using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lynkly.Resolver.API.Endpoints.Links;
 
@@ -22,11 +20,9 @@ public sealed class ResolveShortUrlEndpoint : IEndpoint
                     IMediator mediator,
                     CancellationToken cancellationToken) =>
                 {
-                    var endpointLogger = httpContext.RequestServices.GetService<IStructuredLogger<ResolveShortUrlEndpoint>>();
+                    var endpointLogger = EndpointLoggingContext.ResolveLogger<ResolveShortUrlEndpoint>(httpContext);
                     var requestId = httpContext.TraceIdentifier;
-                    var userId = httpContext.User.Identity?.Name
-                                 ?? httpContext.Request.Headers[Constants.Headers.UserId].ToString()
-                                 ?? "anonymous";
+                    var userId = EndpointLoggingContext.ResolveUserId(httpContext);
 
                     endpointLogger?.LogInformation(
                         "Resolve short URL endpoint started RequestId {RequestId} UserId {UserId} Alias {Alias}",

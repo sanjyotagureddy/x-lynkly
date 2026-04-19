@@ -11,6 +11,16 @@ namespace Lynkly.Shared.Kernel.Logging.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
+    public static IServiceCollection AddKernelLoggingAbstractions(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddLogging();
+        services.TryAddTransient(typeof(IStructuredLogger<>), typeof(StructuredLogger<>));
+
+        return services;
+    }
+
     public static IServiceCollection AddKernelLogging(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -18,6 +28,8 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
+
+        services.AddKernelLoggingAbstractions();
 
         var loggingOptions = new KernelLoggingOptions();
         configuration.GetSection(KernelLoggingOptions.SectionName).Bind(loggingOptions);
@@ -50,7 +62,6 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<Serilog.ILogger>(logger);
         services.AddLogging(builder => builder.AddSerilog(logger, dispose: true));
-        services.TryAddTransient(typeof(IStructuredLogger<>), typeof(StructuredLogger<>));
 
         return services;
     }

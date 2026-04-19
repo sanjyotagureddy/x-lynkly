@@ -5,7 +5,6 @@ using Lynkly.Shared.Kernel.Core.Web;
 using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lynkly.Resolver.API.Endpoints.Links;
 
@@ -59,42 +58,30 @@ public sealed class CreateShortUrlEndpoint : IEndpoint
 
     private static void LogStarted(HttpContext httpContext, string? alias)
     {
-        ResolveLogger(httpContext)?.LogInformation(
+        EndpointLoggingContext.ResolveLogger<CreateShortUrlEndpoint>(httpContext)?.LogInformation(
             "Create short URL endpoint started RequestId {RequestId} UserId {UserId} Alias {Alias}",
             httpContext.TraceIdentifier,
-            ResolveUserId(httpContext),
+            EndpointLoggingContext.ResolveUserId(httpContext),
             alias ?? "generated");
     }
 
     private static void LogValidationFailed(HttpContext httpContext, int validationErrorCount)
     {
-        ResolveLogger(httpContext)?.LogWarning(
+        EndpointLoggingContext.ResolveLogger<CreateShortUrlEndpoint>(httpContext)?.LogWarning(
             "Create short URL validation failed RequestId {RequestId} UserId {UserId} ValidationErrorCount {ValidationErrorCount}",
             httpContext.TraceIdentifier,
-            ResolveUserId(httpContext),
+            EndpointLoggingContext.ResolveUserId(httpContext),
             validationErrorCount);
     }
 
     private static void LogCompleted(HttpContext httpContext, Guid linkId, string alias)
     {
-        ResolveLogger(httpContext)?.LogInformation(
+        EndpointLoggingContext.ResolveLogger<CreateShortUrlEndpoint>(httpContext)?.LogInformation(
             "Create short URL endpoint completed RequestId {RequestId} UserId {UserId} EntityId {EntityId} Alias {Alias}",
             httpContext.TraceIdentifier,
-            ResolveUserId(httpContext),
+            EndpointLoggingContext.ResolveUserId(httpContext),
             linkId,
             alias);
-    }
-
-    private static IStructuredLogger<CreateShortUrlEndpoint>? ResolveLogger(HttpContext httpContext)
-    {
-        return httpContext.RequestServices.GetService<IStructuredLogger<CreateShortUrlEndpoint>>();
-    }
-
-    private static string ResolveUserId(HttpContext httpContext)
-    {
-        var headerUserId = httpContext.Request.Headers[Constants.Headers.UserId].ToString();
-        return httpContext.User.Identity?.Name
-               ?? (string.IsNullOrWhiteSpace(headerUserId) ? "anonymous" : headerUserId);
     }
 
     public sealed record CreateShortUrlRequest(string OriginalUrl, CreateShortUrlMetadataRequest? Metadata);

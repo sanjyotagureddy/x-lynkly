@@ -4,6 +4,7 @@ using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Messaging.Configuration;
 using Lynkly.Shared.Kernel.Messaging.DependencyInjection;
 using Lynkly.Shared.Kernel.Persistence.DependencyInjection;
+using Lynkly.Shared.Kernel.Logging.DependencyInjection;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,7 @@ public static class ServiceCollectionExtensions
 
         services.AddKernelMessaging();
         services.AddKernelPersistence();
+        services.AddKernelLoggingAbstractions();
 
         EnsureSupportedTransport(configuration);
         ConfigureMessagingOptions(services, configuration);

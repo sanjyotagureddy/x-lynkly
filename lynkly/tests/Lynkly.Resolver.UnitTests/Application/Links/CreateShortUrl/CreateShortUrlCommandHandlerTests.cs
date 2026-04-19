@@ -183,7 +183,7 @@ public sealed class CreateShortUrlCommandHandlerTests
             "CreateShortUrl command handling started RequestId {RequestId} CorrelationId {CorrelationId} UserId {UserId} Alias {Alias}",
             Arg.Any<object?[]>());
 
-        var completionCall = logger.ReceivedCalls().First(call =>
+        var completionCall = logger.ReceivedCalls().Single(call =>
             call.GetMethodInfo().Name == nameof(IStructuredLogger<CreateShortUrlCommandHandler>.LogInformation)
             && call.GetArguments()[0] is string messageTemplate
             && messageTemplate == "CreateShortUrl command handling completed RequestId {RequestId} CorrelationId {CorrelationId} EntityId {EntityId} Alias {Alias}");

@@ -7,9 +7,9 @@ public sealed class RequestContextMiddleware(
     RequestDelegate next,
     IHostEnvironment environment,
     IEnumerable<IRequestContextEnricher> enrichers,
-    IStructuredLogger<RequestContextMiddleware>? logger = null)
+    IStructuredLogger<RequestContextMiddleware> logger)
 {
-    private readonly IStructuredLogger<RequestContextMiddleware> _logger = logger ?? NoOpStructuredLogger<RequestContextMiddleware>.Instance;
+    private readonly IStructuredLogger<RequestContextMiddleware> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
@@ -44,17 +44,23 @@ public sealed class RequestContextMiddleware(
                     enricher.EnrichResponse(httpContext, appContext);
                 }
 
+                return Task.CompletedTask;
+            });
+
+            try
+            {
+                await next(httpContext);
+            }
+            finally
+            {
                 _logger.LogInformation(
                     "Request completed {Method} {Path} StatusCode {StatusCode} RequestId {RequestId}",
                     httpContext.Request.Method,
                     httpContext.Request.Path.ToString(),
                     httpContext.Response.StatusCode,
                     appContext.RequestId);
-
-                return Task.CompletedTask;
-            });
-
-            await next(httpContext);
+            }
         }
     }
+
 }
