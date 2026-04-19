@@ -141,7 +141,6 @@ public sealed class MediatorScaffoldingTests
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 yield return i;
-                await Task.Yield();
             }
         }
     }

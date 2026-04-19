@@ -43,7 +43,17 @@ internal static class NotificationHandlerWrapperCache
             }
 
             var wrapperType = typeof(NotificationHandlerWrapper<>).MakeGenericType(type);
-            return (NotificationHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+
+            try
+            {
+                return (NotificationHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create notification handler wrapper for type '{type.FullName}'.",
+                    exception);
+            }
         });
     }
 }

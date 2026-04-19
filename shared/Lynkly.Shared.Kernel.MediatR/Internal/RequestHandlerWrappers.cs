@@ -39,7 +39,17 @@ internal static class RequestHandlerWrapperCache
 
             var responseType = requestInterface.GetGenericArguments()[0];
             var wrapperType = typeof(RequestHandlerWrapper<,>).MakeGenericType(type, responseType);
-            return (RequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+
+            try
+            {
+                return (RequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create request handler wrapper for type '{type.FullName}'.",
+                    exception);
+            }
         });
     }
 }

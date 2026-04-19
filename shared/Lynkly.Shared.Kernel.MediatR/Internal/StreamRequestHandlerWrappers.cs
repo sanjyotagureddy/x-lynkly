@@ -55,7 +55,17 @@ internal static class StreamRequestHandlerWrapperCache
 
             var responseType = requestInterface.GetGenericArguments()[0];
             var wrapperType = typeof(StreamRequestHandlerWrapper<,>).MakeGenericType(type, responseType);
-            return (StreamRequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+
+            try
+            {
+                return (StreamRequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create stream request handler wrapper for type '{type.FullName}'.",
+                    exception);
+            }
         });
     }
 }

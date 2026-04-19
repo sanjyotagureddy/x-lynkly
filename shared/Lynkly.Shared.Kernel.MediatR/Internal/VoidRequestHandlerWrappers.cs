@@ -35,7 +35,17 @@ internal static class VoidRequestHandlerWrapperCache
             }
 
             var wrapperType = typeof(VoidRequestHandlerWrapper<>).MakeGenericType(type);
-            return (VoidRequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+
+            try
+            {
+                return (VoidRequestHandlerWrapper)Activator.CreateInstance(wrapperType)!;
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to create void request handler wrapper for type '{type.FullName}'.",
+                    exception);
+            }
         });
     }
 }
