@@ -14,7 +14,7 @@ public static class TaskHelper
 
         if (timeout <= TimeSpan.Zero)
         {
-            throw SharedKernelException.InvalidArgument("Timeout must be greater than zero.");
+            throw SharedKernelException.InvalidArgument("Argument 'timeout' must be greater than zero.");
         }
 
         return await task.WaitAsync(timeout, cancellationToken).ConfigureAwait(false);
@@ -32,7 +32,7 @@ public static class TaskHelper
 
         if (maxDegreeOfParallelism <= 0)
         {
-            throw SharedKernelException.InvalidArgument("Degree of parallelism must be greater than zero.");
+            throw SharedKernelException.InvalidArgument("Argument 'maxDegreeOfParallelism' must be greater than zero.");
         }
 
         var factories = taskFactories as IList<Func<CancellationToken, Task<T>>> ?? taskFactories.ToList();

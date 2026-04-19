@@ -22,7 +22,7 @@ public static class RandomHelper
     {
         if (length < 0)
         {
-            throw SharedKernelException.InvalidArgument("Length cannot be negative.");
+            throw SharedKernelException.InvalidArgument("Argument 'length' cannot be negative.");
         }
 
         var bytes = new byte[length];
@@ -37,7 +37,7 @@ public static class RandomHelper
     {
         if (length < 0)
         {
-            throw SharedKernelException.InvalidArgument("Length cannot be negative.");
+            throw SharedKernelException.InvalidArgument("Argument 'length' cannot be negative.");
         }
 
         var bytes = new byte[length];
