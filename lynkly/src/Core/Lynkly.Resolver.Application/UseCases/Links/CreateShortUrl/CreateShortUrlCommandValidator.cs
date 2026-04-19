@@ -4,8 +4,12 @@ namespace Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 
 public sealed class CreateShortUrlCommandValidator : AbstractValidator<CreateShortUrlCommand>
 {
-    public CreateShortUrlCommandValidator()
+    private readonly TimeProvider _timeProvider;
+
+    public CreateShortUrlCommandValidator(TimeProvider? timeProvider = null)
     {
+        _timeProvider = timeProvider ?? TimeProvider.System;
+
         RuleFor(command => command.OriginalUrl)
             .NotEmpty()
             .Must(BeAbsoluteHttpUrl)
@@ -18,7 +22,7 @@ public sealed class CreateShortUrlCommandValidator : AbstractValidator<CreateSho
             .WithMessage("Alias can contain only letters, numbers, '_' and '-'.");
 
         RuleFor(command => command.ExpiresAtUtc)
-            .Must(expiresAtUtc => !expiresAtUtc.HasValue || expiresAtUtc > DateTimeOffset.UtcNow)
+            .Must(expiresAtUtc => !expiresAtUtc.HasValue || expiresAtUtc > _timeProvider.GetUtcNow())
             .WithMessage("ExpiresAtUtc must be in the future.");
     }
 

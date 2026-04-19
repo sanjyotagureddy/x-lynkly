@@ -23,9 +23,24 @@ internal sealed class LinkWriteRepository(AppDbContext dbContext) : ILinkWriteRe
 
         var tenant = Tenant.Create(DefaultTenantName);
         _dbContext.Tenants.Add(tenant);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return tenant.Id;
+        }
+        catch (DbUpdateException)
+        {
+            _dbContext.Entry(tenant).State = EntityState.Detached;
 
-        return tenant.Id;
+            var concurrentTenant = await _dbContext.Tenants
+                .FirstOrDefaultAsync(savedTenant => savedTenant.Name == DefaultTenantName, cancellationToken);
+            if (concurrentTenant is not null)
+            {
+                return concurrentTenant.Id;
+            }
+
+            throw;
+        }
     }
 
     public Task<bool> AliasExistsAsync(TenantId tenantId, string alias, CancellationToken cancellationToken)

@@ -71,7 +71,8 @@ public sealed class CreateShortUrlCommandHandler(
             }
         }
 
-        throw new InvalidOperationException("Could not generate a unique short URL alias.");
+        throw new InvalidOperationException(
+            $"Failed to generate a unique alias after {MaxAliasGenerationAttempts} attempts. Please retry or provide a custom alias.");
     }
 
     private static string GenerateAlias()
