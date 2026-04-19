@@ -339,38 +339,18 @@ Lynkly.sln
 ├── shared/
 │   │
 │   ├── Lynkly.Shared.Kernel.Core
-│   │   ├── Abstractions/
-│   │   ├── Results/
-│   │   └── Extensions/
-│   │
-│   ├── Lynkly.Shared.Kernel.Logging
-│   │   ├── Interfaces/
-│   │   ├── Implementations/
-│   │   └── Enrichers/
+│   │   ├── Helpers/
+│   │   ├── Validation/
+│   │   ├── Exceptions/
+│   │   └── RequestContext/
 │   │
 │   ├── Lynkly.Shared.Kernel.Caching
-│   │   ├── Interfaces/
-│   │   ├── Models/
-│   │   └── Builders/
-│   │
+│   ├── Lynkly.Shared.Kernel.Logging
+│   ├── Lynkly.Shared.Kernel.MediatR
 │   ├── Lynkly.Shared.Kernel.Messaging
-│   │   ├── Abstractions/
-│   │   ├── Events/
-│   │   └── Contracts/
-│   │
+│   ├── Lynkly.Shared.Kernel.Observability
 │   ├── Lynkly.Shared.Kernel.Persistence
-│   │   ├── Base/
-│   │   ├── UnitOfWork/
-│   │   └── Interfaces/
-│   │
-│   ├── Lynkly.Shared.Kernel.Validation
-│   │   ├── Validators/
-│   │   └── Extensions/
-│   │
-│   └── Lynkly.Shared.Kernel.Exceptions
-│       ├── Base/
-│       ├── Codes/
-│       └── Handlers/
+│   └── Lynkly.Shared.Kernel.Security
 │
 ├── tests/
 │   │

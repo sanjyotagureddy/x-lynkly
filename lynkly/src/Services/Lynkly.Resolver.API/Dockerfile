@@ -19,7 +19,6 @@ COPY ["aspire/lynkly.ServiceDefaults/lynkly.ServiceDefaults.csproj", "aspire/lyn
 COPY ["src/Core/Lynkly.Resolver.Application/Lynkly.Resolver.Application.csproj", "src/Core/Lynkly.Resolver.Application/"]
 COPY ["src/Core/Lynkly.Resolver.Domain/Lynkly.Resolver.Domain.csproj", "src/Core/Lynkly.Resolver.Domain/"]
 COPY ["shared/Lynkly.Shared.Kernel.Core/Lynkly.Shared.Kernel.Core.csproj", "shared/Lynkly.Shared.Kernel.Core/"]
-COPY ["shared/Lynkly.Shared.Kernel.Exceptions/Lynkly.Shared.Kernel.Exceptions.csproj", "shared/Lynkly.Shared.Kernel.Exceptions/"]
 COPY ["src/Infrastructure/Lynkly.Resolver.Infrastructure/Lynkly.Resolver.Infrastructure.csproj", "src/Infrastructure/Lynkly.Resolver.Infrastructure/"]
 COPY ["src/Infrastructure/Lynkly.Resolver.Infrastructure.Caching/Lynkly.Resolver.Infrastructure.Caching.csproj", "src/Infrastructure/Lynkly.Resolver.Infrastructure.Caching/"]
 COPY ["shared/Lynkly.Shared.Kernel.Caching/Lynkly.Shared.Kernel.Caching.csproj", "shared/Lynkly.Shared.Kernel.Caching/"]

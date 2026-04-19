@@ -1,7 +1,7 @@
-# Lynkly.Shared.Kernel.Helpers
+# Lynkly.Shared.Kernel.Core.Helpers
 
 ## Purpose
-`Lynkly.Shared.Kernel.Helpers` is a framework-agnostic shared utility package for reusable technical helpers across services and domains.
+`Lynkly.Shared.Kernel.Core.Helpers` is the framework-agnostic helper module inside `Lynkly.Shared.Kernel.Core`, used for reusable technical helpers across services and domains.
 
 ## Folder Structure
 - `Collections/CollectionExtensions.cs`
@@ -40,4 +40,4 @@ var hash = SecurityHelper.ComputeSha256("payload");
 ```
 
 ## Dependency Rationale
-`JsonHelper` uses `Newtonsoft.Json` to provide reusable `JsonSerializerSettings`-based behavior and broad compatibility with existing polymorphic and contract customization scenarios used across .NET services. This package keeps that dependency isolated to JSON helper functionality.
+`JsonHelper` uses `Newtonsoft.Json` to provide reusable `JsonSerializerSettings`-based behavior and broad compatibility with existing polymorphic and contract customization scenarios used across .NET services. The dependency remains isolated to helper-level JSON functionality.
