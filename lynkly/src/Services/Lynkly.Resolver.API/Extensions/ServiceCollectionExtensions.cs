@@ -19,7 +19,7 @@ public static class ModuleRegistration
         services.AddRequestContextSupport();
 
         services.AddResolverApplication();
-        services.AddResolverInfrastructure();
+        services.AddResolverInfrastructure(configuration);
 
         return services;
     }
