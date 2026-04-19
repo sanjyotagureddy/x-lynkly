@@ -7,6 +7,7 @@ using Lynkly.Shared.Kernel.Caching.Abstractions;
 using Lynkly.Resolver.Domain.Links;
 using Lynkly.Shared.Kernel.Core.Exceptions.UrlShortener;
 using Lynkly.Shared.Kernel.Core.Helpers.Security;
+using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Security.Encryption;
 using NSubstitute;
@@ -20,6 +21,7 @@ public sealed class CreateShortUrlCommandHandlerTests
         TestEncryptionService? encryption = null,
         IShortAliasGenerator? aliasGenerator = null,
         IBlockedDomainChecker? blockedDomainChecker = null,
+        IStructuredLogger<CreateShortUrlCommandHandler>? logger = null,
         TimeProvider? timeProvider = null)
     {
         return new CreateShortUrlCommandHandler(
@@ -29,6 +31,7 @@ public sealed class CreateShortUrlCommandHandlerTests
             Substitute.For<IMessagePublisher>(),
             Substitute.For<ICacheService>(),
             blockedDomainChecker ?? new AllowAllDomainChecker(),
+            logger ?? Substitute.For<IStructuredLogger<CreateShortUrlCommandHandler>>(),
             timeProvider);
     }
 
@@ -43,7 +46,8 @@ public sealed class CreateShortUrlCommandHandlerTests
         var handler = new CreateShortUrlCommandHandler(
             repository, encryptionService, aliasGenerator, messagePublisher,
             cacheService,
-            new AllowAllDomainChecker());
+            new AllowAllDomainChecker(),
+            Substitute.For<IStructuredLogger<CreateShortUrlCommandHandler>>());
 
         const string originalUrl = "https://example.com/some/long/path";
         var command = new CreateShortUrlCommand(originalUrl, "summer-sale", DateTimeOffset.UtcNow.AddDays(2));
@@ -84,7 +88,8 @@ public sealed class CreateShortUrlCommandHandlerTests
             aliasGenerator,
             Substitute.For<IMessagePublisher>(),
             Substitute.For<ICacheService>(),
-            new AllowAllDomainChecker());
+            new AllowAllDomainChecker(),
+            Substitute.For<IStructuredLogger<CreateShortUrlCommandHandler>>());
 
         var command = new CreateShortUrlCommand("https://example.com/landing", null, null);
 
@@ -119,7 +124,8 @@ public sealed class CreateShortUrlCommandHandlerTests
             new TestShortAliasGenerator("unused"),
             Substitute.For<IMessagePublisher>(),
             Substitute.For<ICacheService>(),
-            new AllowAllDomainChecker());
+            new AllowAllDomainChecker(),
+            Substitute.For<IStructuredLogger<CreateShortUrlCommandHandler>>());
 
         var command = new CreateShortUrlCommand("https://example.com", "existing", null);
 
@@ -162,6 +168,27 @@ public sealed class CreateShortUrlCommandHandlerTests
         Assert.NotNull(repository.StoredLink);
         Assert.NotNull(repository.StoredLink!.ExpiresAtUtc);
         Assert.Equal(fixedNow.AddDays(30), repository.StoredLink.ExpiresAtUtc!.Value);
+    }
+
+    [Fact]
+    public async Task Handle_LogsStructuredCommandLifecycle()
+    {
+        var logger = Substitute.For<IStructuredLogger<CreateShortUrlCommandHandler>>();
+        var handler = BuildHandler(logger: logger);
+        var command = new CreateShortUrlCommand("https://example.com/path", "my-alias", null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        logger.Received().LogInformation(
+            "CreateShortUrl command handling started RequestId {RequestId} CorrelationId {CorrelationId} UserId {UserId} Alias {Alias}",
+            Arg.Any<object?[]>());
+        logger.Received().LogInformation(
+            "CreateShortUrl command handling completed RequestId {RequestId} CorrelationId {CorrelationId} EntityId {EntityId} Alias {Alias}",
+            Arg.Is<object?[]>(values =>
+                values.Length == 4 &&
+                values[2] is Guid entityId &&
+                entityId == result.LinkId &&
+                values[3]?.ToString() == result.Alias));
     }
 
     [Fact]

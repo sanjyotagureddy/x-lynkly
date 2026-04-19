@@ -2,6 +2,7 @@ using FluentValidation;
 using Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 using Lynkly.Shared.Kernel.Core;
 using Lynkly.Shared.Kernel.Core.Web;
+using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Microsoft.AspNetCore.Routing;
 
@@ -20,9 +21,21 @@ public sealed class CreateShortUrlEndpoint : IEndpoint
                     CreateShortUrlRequest request,
                     IMediator mediator,
                     IValidator<CreateShortUrlCommand> validator,
+                    IStructuredLogger<CreateShortUrlEndpoint> logger,
                     HttpContext httpContext,
                     CancellationToken cancellationToken) =>
                 {
+                    var requestId = httpContext.TraceIdentifier;
+                    var userId = httpContext.User.Identity?.Name
+                                 ?? httpContext.Request.Headers[Constants.Headers.UserId].ToString()
+                                 ?? "anonymous";
+
+                    logger.LogInformation(
+                        "Create short URL endpoint started RequestId {RequestId} UserId {UserId} Alias {Alias}",
+                        requestId,
+                        userId,
+                        request.Metadata?.Alias ?? "generated");
+
                     var command = new CreateShortUrlCommand(
                         request.OriginalUrl,
                         request.Metadata?.Alias,
@@ -31,11 +44,23 @@ public sealed class CreateShortUrlEndpoint : IEndpoint
                     var validationResult = await validator.ValidateAsync(command, cancellationToken);
                     if (!validationResult.IsValid)
                     {
+                        logger.LogWarning(
+                            "Create short URL validation failed RequestId {RequestId} UserId {UserId} ValidationErrorCount {ValidationErrorCount}",
+                            requestId,
+                            userId,
+                            validationResult.Errors.Count);
                         return Results.ValidationProblem(validationResult.ToDictionary());
                     }
 
                     var result = await mediator.Send(command, cancellationToken);
                     var shortUrl = BuildShortUrl(httpContext, result.Alias);
+
+                    logger.LogInformation(
+                        "Create short URL endpoint completed RequestId {RequestId} UserId {UserId} EntityId {EntityId} Alias {Alias}",
+                        requestId,
+                        userId,
+                        result.LinkId,
+                        result.Alias);
 
                     return Results.Created(shortUrl, new CreateShortUrlResponse(result.LinkId, shortUrl, result.Alias));
                 })

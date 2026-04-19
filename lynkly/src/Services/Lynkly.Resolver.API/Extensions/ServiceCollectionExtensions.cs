@@ -3,6 +3,7 @@ using Lynkly.Resolver.Application.DependencyInjection;
 using Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 using Lynkly.Resolver.Infrastructure.DependencyInjection;
 using Lynkly.Shared.Kernel.Core.Web;
+using Lynkly.Shared.Kernel.Logging.DependencyInjection;
 using Lynkly.Shared.Kernel.Security.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
@@ -18,6 +19,7 @@ public static class ModuleRegistration
         services.AddSwaggerSupport(configuration);
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
         services.AddAuthorization();
+        services.AddKernelLogging(configuration);
 
         services.AddRequestContextSupport();
 

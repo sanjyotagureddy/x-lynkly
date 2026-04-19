@@ -1,5 +1,7 @@
 using Lynkly.Resolver.Application.UseCases.Links.ResolveShortUrl;
+using Lynkly.Shared.Kernel.Core;
 using Lynkly.Shared.Kernel.Core.Web;
+using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Microsoft.AspNetCore.Routing;
 
@@ -17,16 +19,50 @@ public sealed class ResolveShortUrlEndpoint : IEndpoint
                     string alias,
                     HttpContext httpContext,
                     IMediator mediator,
+                    IStructuredLogger<ResolveShortUrlEndpoint> logger,
                     CancellationToken cancellationToken) =>
                 {
+                    var requestId = httpContext.TraceIdentifier;
+                    var userId = httpContext.User.Identity?.Name
+                                 ?? httpContext.Request.Headers[Constants.Headers.UserId].ToString()
+                                 ?? "anonymous";
+
+                    logger.LogInformation(
+                        "Resolve short URL endpoint started RequestId {RequestId} UserId {UserId} Alias {Alias}",
+                        requestId,
+                        userId,
+                        alias);
+
                     if (!TryGetCacheExpiryOverrideSeconds(httpContext, out var cacheExpirySeconds, out var validationError))
                     {
+                        logger.LogWarning(
+                            "Resolve short URL request validation failed RequestId {RequestId} UserId {UserId} Alias {Alias}",
+                            requestId,
+                            userId,
+                            alias);
                         return Results.ValidationProblem(validationError!);
                     }
 
                     var result = await mediator.Send(
                         new ResolveShortUrlQuery(alias, cacheExpirySeconds),
                         cancellationToken);
+
+                    if (result is null)
+                    {
+                        logger.LogWarning(
+                            "Resolve short URL not found RequestId {RequestId} UserId {UserId} Alias {Alias}",
+                            requestId,
+                            userId,
+                            alias);
+                    }
+                    else
+                    {
+                        logger.LogInformation(
+                            "Resolve short URL completed RequestId {RequestId} UserId {UserId} Alias {Alias}",
+                            requestId,
+                            userId,
+                            alias);
+                    }
 
                     return result is null
                         ? Results.NotFound()

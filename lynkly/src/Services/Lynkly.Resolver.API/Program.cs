@@ -12,6 +12,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 app.UseSwaggerSupport();
 
+app.UseRequestContext();
 app.UseAuthentication();
 app.UseAuthorization();
 

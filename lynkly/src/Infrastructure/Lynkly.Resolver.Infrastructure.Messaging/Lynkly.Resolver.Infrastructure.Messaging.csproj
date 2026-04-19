@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
     <ProjectReference Include="..\..\Core\Lynkly.Resolver.Domain\Lynkly.Resolver.Domain.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Logging\Lynkly.Shared.Kernel.Logging.csproj" />
     <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Messaging\Lynkly.Shared.Kernel.Messaging.csproj" />
     <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Persistence\Lynkly.Shared.Kernel.Persistence.csproj" />
   </ItemGroup>

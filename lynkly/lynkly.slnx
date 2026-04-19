@@ -38,6 +38,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Lynkly.Resolver.IntegrationTests/Lynkly.Resolver.IntegrationTests.csproj" />
     <Project Path="tests/Lynkly.Resolver.UnitTests/Lynkly.Resolver.UnitTests.csproj" />
+    <Project Path="tests/Lynkly.Shared.Kernel.Logging.Tests/Lynkly.Shared.Kernel.Logging.Tests.csproj" />
     <Project Path="tests/Lynkly.Shared.Kernel.MediatR.Tests/Lynkly.Shared.Kernel.MediatR.Tests.csproj" />
     <Project Path="tests/Lynkly.Shared.Kernel.Observability.Tests/Lynkly.Shared.Kernel.Observability.Tests.csproj" />
     <Project Path="tests/Lynkly.Shared.Kernel.Security.Tests/Lynkly.Shared.Kernel.Security.Tests.csproj" />

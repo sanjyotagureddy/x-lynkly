@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\aspire\lynkly.ServiceDefaults\lynkly.ServiceDefaults.csproj" />
     <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Core\Lynkly.Shared.Kernel.Core.csproj" />
+    <ProjectReference Include="..\..\..\shared\Lynkly.Shared.Kernel.Logging\Lynkly.Shared.Kernel.Logging.csproj" />
     <ProjectReference Include="..\..\Core\Lynkly.Resolver.Application\Lynkly.Resolver.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\Lynkly.Resolver.Infrastructure\Lynkly.Resolver.Infrastructure.csproj" />
   </ItemGroup>

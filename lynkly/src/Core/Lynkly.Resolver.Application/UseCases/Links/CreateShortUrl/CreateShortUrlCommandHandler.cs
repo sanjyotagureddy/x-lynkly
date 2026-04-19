@@ -3,13 +3,16 @@ using Lynkly.Resolver.Application.Abstractions.Persistence;
 using Lynkly.Resolver.Application.UseCases.Links;
 using Lynkly.Resolver.Domain.Links;
 using Lynkly.Resolver.Domain.Links.Events;
+using Lynkly.Shared.Kernel.Core;
 using Lynkly.Shared.Kernel.Caching.Abstractions;
 using Lynkly.Shared.Kernel.Core.Domain;
 using Lynkly.Shared.Kernel.Core.Exceptions.UrlShortener;
 using Lynkly.Shared.Kernel.Core.Helpers.Security;
+using Lynkly.Shared.Kernel.Logging.Abstractions;
 using Lynkly.Shared.Kernel.MediatR.Abstractions;
 using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Security.Encryption;
+using ResolverAppContext = Lynkly.Shared.Kernel.Core.AppContext;
 
 namespace Lynkly.Resolver.Application.UseCases.Links.CreateShortUrl;
 
@@ -20,6 +23,7 @@ public sealed class CreateShortUrlCommandHandler(
     IMessagePublisher messagePublisher,
     ICacheService cacheService,
     IBlockedDomainChecker blockedDomainChecker,
+    IStructuredLogger<CreateShortUrlCommandHandler> logger,
     TimeProvider? timeProvider = null) : IRequestHandler<CreateShortUrlCommand, CreateShortUrlResult>
 {
     private const int MaxAliasGenerationAttempts = 5;
@@ -31,11 +35,23 @@ public sealed class CreateShortUrlCommandHandler(
     private readonly IMessagePublisher _messagePublisher = messagePublisher ?? throw new ArgumentNullException(nameof(messagePublisher));
     private readonly ICacheService _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
     private readonly IBlockedDomainChecker _blockedDomainChecker = blockedDomainChecker ?? throw new ArgumentNullException(nameof(blockedDomainChecker));
+    private readonly IStructuredLogger<CreateShortUrlCommandHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
     public async Task<CreateShortUrlResult> Handle(CreateShortUrlCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        var appContext = ResolverAppContext.Current;
+        var userId = appContext.Headers.TryGetValue(Constants.Headers.UserId, out var configuredUserId)
+            ? configuredUserId
+            : "anonymous";
+
+        _logger.LogInformation(
+            "CreateShortUrl command handling started RequestId {RequestId} CorrelationId {CorrelationId} UserId {UserId} Alias {Alias}",
+            appContext.RequestId,
+            appContext.CorrelationId,
+            userId,
+            request.Alias ?? "generated");
 
         var originalUrl = request.OriginalUrl.Trim();
         if (!Uri.TryCreate(originalUrl, UriKind.Absolute, out var destinationUri) ||
@@ -62,6 +78,13 @@ public sealed class CreateShortUrlCommandHandler(
         _repository.Add(link, linkAlias);
         await _repository.SaveChangesAsync(cancellationToken);
 
+        _logger.LogInformation(
+            "CreateShortUrl persisted entity RequestId {RequestId} CorrelationId {CorrelationId} EntityId {EntityId} Alias {Alias}",
+            appContext.RequestId,
+            appContext.CorrelationId,
+            link.Id.Value,
+            linkAlias.Alias);
+
         await PublishDomainEventsAsync(link.DomainEvents, cancellationToken);
         link.ClearDomainEvents();
 
@@ -72,7 +95,14 @@ public sealed class CreateShortUrlCommandHandler(
             {
                 AbsoluteExpirationRelativeToNow = LinkCachingDefaults.DefaultCacheDuration
             },
-            cancellationToken);
+             cancellationToken);
+
+        _logger.LogInformation(
+            "CreateShortUrl command handling completed RequestId {RequestId} CorrelationId {CorrelationId} EntityId {EntityId} Alias {Alias}",
+            appContext.RequestId,
+            appContext.CorrelationId,
+            link.Id.Value,
+            linkAlias.Alias);
 
         return new CreateShortUrlResult(link.Id.Value, linkAlias.Alias);
     }
@@ -110,16 +140,31 @@ public sealed class CreateShortUrlCommandHandler(
         var publishTasks = domainEvents.Select(domainEvent => domainEvent switch
         {
             LinkCreatedDomainEvent linkCreatedDomainEvent =>
-                _messagePublisher.PublishAsync(
-                    new LinkCreatedMessage(
-                        linkCreatedDomainEvent.LinkId.Value,
-                        linkCreatedDomainEvent.TenantId.Value,
-                        linkCreatedDomainEvent.DestinationUrl,
-                        linkCreatedDomainEvent.OccurredOnUtc),
-                    cancellationToken),
+                PublishLinkCreatedEventAsync(linkCreatedDomainEvent, cancellationToken),
             _ => Task.CompletedTask
         });
 
         return Task.WhenAll(publishTasks);
+    }
+
+    private async Task PublishLinkCreatedEventAsync(
+        LinkCreatedDomainEvent linkCreatedDomainEvent,
+        CancellationToken cancellationToken)
+    {
+        var appContext = ResolverAppContext.Current;
+        _logger.LogInformation(
+            "Publishing domain event {DomainEventType} RequestId {RequestId} CorrelationId {CorrelationId} EntityId {EntityId}",
+            nameof(LinkCreatedDomainEvent),
+            appContext.RequestId,
+            appContext.CorrelationId,
+            linkCreatedDomainEvent.LinkId.Value);
+
+        await _messagePublisher.PublishAsync(
+            new LinkCreatedMessage(
+                linkCreatedDomainEvent.LinkId.Value,
+                linkCreatedDomainEvent.TenantId.Value,
+                linkCreatedDomainEvent.DestinationUrl,
+                linkCreatedDomainEvent.OccurredOnUtc),
+            cancellationToken);
     }
 }
