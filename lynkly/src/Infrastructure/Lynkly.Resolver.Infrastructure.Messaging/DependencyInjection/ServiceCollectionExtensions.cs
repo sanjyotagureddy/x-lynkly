@@ -1,5 +1,4 @@
 using Lynkly.Resolver.Infrastructure.Messaging.Configuration;
-using Lynkly.Resolver.Infrastructure.Messaging.HealthChecks;
 using Lynkly.Resolver.Infrastructure.Messaging.Internal;
 using Lynkly.Shared.Kernel.Messaging.Abstractions;
 using Lynkly.Shared.Kernel.Messaging.Configuration;
@@ -25,6 +24,16 @@ public static class ServiceCollectionExtensions
         services.AddKernelMessaging();
         services.AddKernelPersistence();
 
+        EnsureSupportedTransport(configuration);
+        ConfigureMessagingOptions(services, configuration);
+        services.Replace(ServiceDescriptor.Scoped<IMessagePublisher, MassTransitMessagePublisher>());
+        ConfigureMassTransit(services, configuration);
+
+        return services;
+    }
+
+    private static void EnsureSupportedTransport(IConfiguration configuration)
+    {
         var configuredMessagingOptions =
             configuration.GetSection(MessagingOptions.SectionName).Get<MessagingOptions>() ?? new MessagingOptions();
         if (configuredMessagingOptions.Broker != MessagingTransportKind.RabbitMq)
@@ -32,7 +41,10 @@ public static class ServiceCollectionExtensions
             throw new NotSupportedException(
                 $"Messaging broker '{configuredMessagingOptions.Broker}' is not supported by this infrastructure module.");
         }
+    }
 
+    private static void ConfigureMessagingOptions(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddOptions<MessagingOptions>()
             .Bind(configuration.GetSection(MessagingOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.ConnectionStringName),
@@ -50,27 +62,24 @@ public static class ServiceCollectionExtensions
             .Validate(options => options.IntervalDelta > TimeSpan.Zero,
                 "Messaging:RabbitMq:IntervalDelta must be greater than zero.")
             .ValidateOnStart();
+    }
 
-        services.TryAddScoped<IMessagePublisher, MassTransitMessagePublisher>();
-
+    private static void ConfigureMassTransit(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddMassTransit(configurator =>
         {
             configurator.SetKebabCaseEndpointNameFormatter();
-
+            configurator.ConfigureHealthCheckOptions(options =>
+            {
+                options.Name = "rabbitmq";
+                options.Tags.Add("ready");
+            });
             configurator.UsingRabbitMq((context, rabbitMqConfiguration) =>
             {
-                var messagingOptions = context.GetRequiredService<IOptions<MessagingOptions>>().Value;
-
-                var rabbitMqConnectionString = configuration.GetConnectionString(messagingOptions.ConnectionStringName);
-                if (string.IsNullOrWhiteSpace(rabbitMqConnectionString))
-                {
-                    throw new InvalidOperationException(
-                        $"Connection string '{messagingOptions.ConnectionStringName}' was not found.");
-                }
-
+                var connectionString = ResolveRabbitMqConnectionString(context, configuration);
                 var rabbitMqOptions = context.GetRequiredService<IOptions<RabbitMqMessagingOptions>>().Value;
 
-                rabbitMqConfiguration.Host(new Uri(rabbitMqConnectionString));
+                rabbitMqConfiguration.Host(new Uri(connectionString));
                 rabbitMqConfiguration.UseMessageRetry(retryConfiguration =>
                     retryConfiguration.Exponential(
                         rabbitMqOptions.PublishRetryCount,
@@ -80,10 +89,18 @@ public static class ServiceCollectionExtensions
                 rabbitMqConfiguration.ConfigureEndpoints(context);
             });
         });
+    }
 
-        services.AddHealthChecks()
-            .AddCheck<RabbitMqBusHealthCheck>("rabbitmq", tags: ["ready"]);
+    private static string ResolveRabbitMqConnectionString(IBusRegistrationContext context, IConfiguration configuration)
+    {
+        var messagingOptions = context.GetRequiredService<IOptions<MessagingOptions>>().Value;
+        var rabbitMqConnectionString = configuration.GetConnectionString(messagingOptions.ConnectionStringName);
+        if (string.IsNullOrWhiteSpace(rabbitMqConnectionString))
+        {
+            throw new InvalidOperationException(
+                $"Connection string '{messagingOptions.ConnectionStringName}' was not found.");
+        }
 
-        return services;
+        return rabbitMqConnectionString;
     }
 }

@@ -31,21 +31,21 @@ public sealed class RabbitMqMessagingRegistrationTests
     public void AddResolverMessaging_Throws_ForUnsupportedBroker()
     {
         var services = new ServiceCollection();
-        var configuration = BuildConfiguration(("Messaging:Broker", "Kafka"));
+        var configuration = BuildConfiguration(("Messaging:Broker", "999"));
 
         var exception = Assert.Throws<NotSupportedException>(() => services.AddResolverMessaging(configuration));
         Assert.Contains("not supported", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void AddResolverMessaging_RegistersPublisherOptionsAndRabbitMqHealthCheck()
+    public async Task AddResolverMessaging_RegistersPublisherOptionsAndRabbitMqHealthCheck()
     {
         var services = new ServiceCollection();
         var configuration = BuildConfiguration();
 
         services.AddResolverMessaging(configuration);
 
-        using var provider = services.BuildServiceProvider();
+        await using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
 
         var publisher = scope.ServiceProvider.GetRequiredService<IMessagePublisher>();
@@ -60,7 +60,7 @@ public sealed class RabbitMqMessagingRegistrationTests
         Assert.Equal(TimeSpan.FromSeconds(1), rabbitMqOptions.MinRetryDelay);
 
         var healthCheckOptions = provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value;
-        var rabbitCheck = Assert.Single(healthCheckOptions.Registrations.Where(registration => registration.Name == "rabbitmq"));
+        var rabbitCheck = Assert.Single(healthCheckOptions.Registrations, registration => registration.Name == "rabbitmq");
         Assert.Contains("ready", rabbitCheck.Tags);
     }
 
