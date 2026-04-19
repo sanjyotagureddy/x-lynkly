@@ -13,7 +13,9 @@ public static class ModuleRegistration
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddLynklyMediator(typeof(ModuleRegistration).Assembly);
-        services.AddSingleton<IShortAliasGenerator, Sha256ShortAliasGenerator>();
+        services.AddOptions<AliasGeneratorOptions>()
+            .BindConfiguration(AliasGeneratorOptions.SectionName);
+        services.AddSingleton<IShortAliasGenerator, HmacShortAliasGenerator>();
         services.AddOptions<BlockedDomainOptions>()
             .BindConfiguration(BlockedDomainOptions.SectionName);
         services.AddSingleton<IBlockedDomainChecker, ConfigurableBlockedDomainChecker>();
