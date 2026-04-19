@@ -71,7 +71,7 @@ public static class ServiceCollectionExtensions
             configurator.SetKebabCaseEndpointNameFormatter();
             configurator.ConfigureHealthCheckOptions(options =>
             {
-                options.Name = "rabbitmq";
+                options.Name = "lynkly-rabbitmq";
                 options.Tags.Add("ready");
             });
             configurator.UsingRabbitMq((context, rabbitMqConfiguration) =>

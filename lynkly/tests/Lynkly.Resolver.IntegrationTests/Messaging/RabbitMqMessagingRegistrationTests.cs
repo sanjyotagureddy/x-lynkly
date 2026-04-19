@@ -60,7 +60,7 @@ public sealed class RabbitMqMessagingRegistrationTests
         Assert.Equal(TimeSpan.FromSeconds(1), rabbitMqOptions.MinRetryDelay);
 
         var healthCheckOptions = provider.GetRequiredService<IOptions<HealthCheckServiceOptions>>().Value;
-        var rabbitCheck = Assert.Single(healthCheckOptions.Registrations, registration => registration.Name == "rabbitmq");
+        var rabbitCheck = Assert.Single(healthCheckOptions.Registrations, registration => registration.Name == "lynkly-rabbitmq");
         Assert.Contains("ready", rabbitCheck.Tags);
     }
 
